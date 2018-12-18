@@ -14,3 +14,4 @@ I like working from terminal. As my projects grew more complex, and I needed to 
 
 ## How?
 -------
+The project files are all done using json so that they are human readable, and easily modified in your favourite text editor. 
