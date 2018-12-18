@@ -19,6 +19,7 @@ setuptools.setup(
             'click',
             'configparser',
             'networkx',
+            'pyyaml',
         ],
         packages=setuptools.find_packages(),
         classifiers=[
