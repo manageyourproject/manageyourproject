@@ -18,7 +18,6 @@ setuptools.setup(
             'colorama',
             'click',
             'configparser',
-            'pytz',
             'networkx',
         ],
         packages=setuptools.find_packages(),

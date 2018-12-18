@@ -11,13 +11,13 @@ Many project management tools lack many features or have their features hidden b
 ## Installation
 myp requires python 3 to run, and manages dependancies using pip. In the future, myp will be installable via pip, but as of right now it is only installable using the following commands. 
 
-NOTE: Make sure to use your system's python 3 installation, not 2.x. myp has not been tested using python <3.x and likely will not work.
-
 ```bash
 git clone https://github.com/manageyourproject/manageyourproject
 cd manageyourproject
 pip3 install --user --editable ./
 ```
+
+NOTE: myp has only been tested with python 3 on a unix system. It is unknown if it will work on a windows machine, and suspected that it will not work with python <3.x
 
 ## Usage
 
