@@ -39,15 +39,15 @@ def list(ctxObjs):
             confDat['session']['projpath'])
     termWidth, _ = click.get_terminal_size()
     colAlt = True
-    for i in projs:
+    for keys, value in projs:
         if colAlt:
             click.echo(Fore.WHITE+Back.BLACK+\
                     '{i:{termWidth}}'.format(\
-                    i=i, termWidth=int(termWidth)))
+                    i=key, termWidth=int(termWidth)))
         else:
             click.echo(Fore.BLACK+Back.WHITE+\
                     '{i:{termWidth}}'.format(\
-                    i=i,termWidth=int(termWidth)))
+                    i=key,termWidth=int(termWidth)))
 
         colAlt = not colAlt
 

@@ -1,7 +1,9 @@
 # Manage Your Project! A Complete Commandline Project Manager
 ---
 ## A Commandline Project Manage With Bells
-myp aims to provide a free and open source commandline project management experience that can serve to organize your projects, teams, and provide 
+myp aims to provide a free and open source commandline project management experience that can serve to organize your projects, teams, and provide visualization.
+
+This project is currently under heavy development and stuff changes a lot from commit to commit. Many features are yet to be implemented and things may not always work right.
 
 ## ...And Whistles
 Many project management tools lack many features or have their features hidden behind a paywall. This tool aims to rectify that. 

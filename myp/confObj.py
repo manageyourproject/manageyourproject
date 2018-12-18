@@ -38,9 +38,12 @@ class confObj:
                     'email': ''}
         self.confDat['session'] = {
                 '; Required Parameters':None,
+                'projpath': {},
                 '; Runtime Set':None,
+                'team':{},
+                'projPrintout':[],
+                'taskPrintout':[],
                 'active': ''}
-        self.confDat['projpath']={}
 
         self.confDat['user']['name'] = click.prompt(\
                 'Full Name', type=str)                  # get user parameters
@@ -48,6 +51,7 @@ class confObj:
                 'E-mail Address', type=str)
         self.confDat['session']['projpath'][\
                 'default'] = self.cfgProj
+        self.con
 
         self.writeConf()                                # write the file
 
