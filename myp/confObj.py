@@ -1,6 +1,3 @@
-# To install, run pip3 install --user --editable ./
-# in the same directory as setup.py or dl from pip using myp
-
 # Manage Your Project! A Complete Commandline Project Manager
 # Copyright 2018 Aaron English
 # Released under the GNU GPL-3
@@ -79,6 +76,6 @@ class confObj:
             click.echo('Current active project: ' +\
                     self.confDat['session']['active'])
         else:
-            click.echo('There are no currently'+\       # ...if there is one
-                    ' active projects')
+            click.echo('There are no currently'+\
+                    ' active projects')                 # ...if there is one
 

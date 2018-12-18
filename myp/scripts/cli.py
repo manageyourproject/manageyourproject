@@ -1,3 +1,7 @@
+# Manage Your Project! A Complete Commandline Project Manager
+# Copyright 2018 Aaron English
+# Released under the GNU GPL-3
+
 import os
 import click
 from colorama import Fore, Back, Style
@@ -15,32 +19,41 @@ def cli(ctx):
     ctx.obj['confObj'] = confObj.confObj()
     if ctx.invoked_subcommand is None:
         ctx.obj['confObj'].printActive()
-        click.echo('Type '+click.style('myp --help', fg='red',bold=True)+' for usage')
+        click.echo('Type '+click.style('myp --help',\
+                fg='red',bold=True)+' for usage')
 
 @cli.command(help='Initialize a new project')
 @click.pass_obj
 @click.argument('projname')
 def proj(ctxObjs, projname):
-    ctxObjs['projObj'] = projObj.projObj(ctxObjs['confObj'],projname)
+    ctxObjs['projObj'] = projObj.projObj(\
+            ctxObjs['confObj'],projname)
     ctxObjs['projObj'].newProj(ctxObjs['confObj'])
     ctxObjs['confObj'].makeActive(projname)
 
-@cli.command(help='List all projects in the project directory')
+@cli.command(help=\
+        'List all projects in the project directory')
 @click.pass_obj
 def list(ctxObjs):
-    projs = os.listdir(ctxObjs['confObj'].confDat['session']['projpath'])
+    projs = os.listdir(ctxObjs['confObj'].\
+            confDat['session']['projpath'])
     termWidth, _ = click.get_terminal_size()
     colAlt = True
     for i in projs:
         if colAlt:
-            click.echo(Fore.WHITE+Back.BLACK+'{i:{termWidth}}'.format(i=i, termWidth=int(termWidth)))
+            click.echo(Fore.WHITE+Back.BLACK+\
+                    '{i:{termWidth}}'.format(\
+                    i=i, termWidth=int(termWidth)))
         else:
-            click.echo(Fore.BLACK+Back.WHITE+'{i:{termWidth}}'.format(i=i,termWidth=int(termWidth)))
+            click.echo(Fore.BLACK+Back.WHITE+\
+                    '{i:{termWidth}}'.format(\
+                    i=i,termWidth=int(termWidth)))
 
         colAlt = not colAlt
 
 
-@cli.command(help='Get currently active project, or activate a project')
+@cli.command(help=\
+        'Get currently active project, or activate a project')
 @click.pass_obj
 @click.option('-pn', '--projname', default=None)
 def active(ctxObjs, projname):
@@ -57,96 +70,129 @@ def reset(ctxObjs):
 @cli.command(help='Create a new task')
 @click.pass_obj
 @click.argument('taskname', required=True)
-@click.option('-pn', '--projname', default=None, help='Name of the project to add the task to')
+@click.option('-pn', '--projname', default=None,\
+        help='Name of the project to add the task to')
 def task(ctxObjs,taskname,projname):
     if not projname:
-        if ctxObjs['confObj'].confDat['session']['active']:
-            projname = ctxObjs['confObj'].confDat['session']['active']
+        if ctxObjs['confObj'].\
+                confDat['session']['active']:
+            projname = ctxObjs['confObj'].\
+                    confDat['session']['active']
         else:
-            projname = click.prompt('Enter a project to add the task to')
+            projname = click.prompt(\
+                    'Enter a project to add the task to')
 
-    ctxObjs['projObj'] = projObj.projObj(ctxObjs['confObj'],projname)
+    ctxObjs['projObj'] = projObj.\
+            projObj(ctxObjs['confObj'],projname)
     ctxObjs['projObj'].readProj()
     ctxObjs['projObj'].newTask(taskname)
     ctxObjs['confObj'].makeActive(projname)
 
 @cli.command(help='List tasks in active project')
 @click.pass_obj
-@click.option('-pn', '--projname', default=None, help='Name of project to get tasks from')
+@click.option('-pn', '--projname', default=None,\
+        help='Name of project to get tasks from')
 def current(ctxObjs,projname):
     if not projname:
-        if ctxObjs['confObj'].confDat['session']['active']:
-            projname = ctxObjs['confObj'].confDat['session']['active']
+        if ctxObjs['confObj'].\
+                confDat['session']['active']:
+            projname = ctxObjs['confObj'].\
+                    confDat['session']['active']
         else:
-            projname = click.prompt('Enter a project to view its tasks')
+            projname = click.prompt(\
+                    'Enter a project to view its tasks')
 
     colAlt = True
     termWidth, _ = click.get_terminal_size()
-    ctxObjs['projObj'] = projObj.projObj(ctxObjs['confObj'],projname)
+    ctxObjs['projObj'] = projObj.projObj(\
+            ctxObjs['confObj'],projname)
     ctxObjs['projObj'].readProj()
     ctxObjs['confObj'].makeActive(projname)
     for key, value in ctxObjs['projObj'].projDat['tasks'].items():
         if not value['status'] == 'finished':
             timeSpent=float(value['timeSpent'])
             if colAlt:
-                click.echo(Fore.WHITE+Back.BLACK+'{key:^{termWidth}} {time:^{termWidth}.{prec}f}'.format(key=key,time=timeSpent,termWidth=int(termWidth/2), prec=3))
+                click.echo(Fore.WHITE+Back.BLACK+\
+                        '{key:^{termWidth}} {time:^{termWidth}.{prec}f}'.\
+                        format(key=key,time=timeSpent,\
+                        termWidth=int(termWidth/2), prec=3))
 
             else:
-                click.echo(Fore.BLACK+Back.WHITE+'{key:^{termWidth}} {time:^{termWidth}.{prec}f}'.format(key=key,time=timeSpent,termWidth=int(termWidth/2), prec=3))
+                click.echo(Fore.BLACK+Back.WHITE+\
+                        '{key:^{termWidth}} {time:^{termWidth}.{prec}f}'.\
+                        format(key=key,time=timeSpent,\
+                        termWidth=int(termWidth/2), prec=3))
 
             colAlt = not colAlt
 
 @cli.command(help='Start tracking time for task')
 @click.pass_obj
 @click.argument('taskname', required=True)
-@click.option('-pn', '--projname', default=None, help='Name of the project holding the task')
+@click.option('-pn', '--projname', default=None,\
+        help='Name of the project holding the task')
 def start(ctxObjs, taskname, projname):
     if not projname:
-        if ctxObjs['confObj'].confDat['session']['active']:
-            projname = ctxObjs['confObj'].confDat['session']['active']
+        if ctxObjs['confObj'].\
+                confDat['session']['active']:
+            projname = ctxObjs['confObj'].\
+                    confDat['session']['active']
         else:
-            projname = click.prompt('Enter a project to add the task to')
+            projname = click.prompt(\
+                    'Enter a project to add the task to')
 
-    ctxObjs['projObj'] = projObj.projObj(ctxObjs['confObj'],projname)
+    ctxObjs['projObj'] = projObj.\
+            projObj(ctxObjs['confObj'],projname)
     ctxObjs['projObj'].readProj()
     ctxObjs['projObj'].startTask(taskname)
 
 @cli.command(help='Stop tracking time for task')
 @click.pass_obj
 @click.argument('taskname')
-@click.option('-pn', '--projname', default=None, help='Name of the project holding the task')
+@click.option('-pn', '--projname', default=None,\
+        help='Name of the project holding the task')
 def stop(ctxObjs, projname, taskname):
     if not projname:
-        if ctxObjs['confObj'].confDat['session']['active']:
-            projname = ctxObjs['confObj'].confDat['session']['active']
+        if ctxObjs['confObj'].\
+                confDat['session']['active']:
+            projname = ctxObjs['confObj'].\
+                    confDat['session']['active']
         else:
-            projname = click.prompt('Enter a project to add the task to')
+            projname = click.prompt(\
+                    'Enter a project to add the task to')
 
-    ctxObjs['projObj'] = projObj.projObj(ctxObjs['confObj'],projname)
+    ctxObjs['projObj'] = projObj.\
+            projObj(ctxObjs['confObj'],projname)
     ctxObjs['projObj'].readProj()
     ctxObjs['projObj'].stopTask(taskname)
 
 @cli.command(help='Stop tracking time for task')
 @click.pass_obj
 @click.argument('taskname')
-@click.option('-pn', '--projname', default=None, help='Name of the project holding the task')
+@click.option('-pn', '--projname', default=None,\
+        help='Name of the project holding the task')
 def finish(ctxObjs, projname, taskname):
     if not projname:
-        if ctxObjs['confObj'].confDat['session']['active']:
-            projname = ctxObjs['confObj'].confDat['session']['active']
+        if ctxObjs['confObj'].\
+                confDat['session']['active']:
+            projname = ctxObjs['confObj'].\
+                    confDat['session']['active']
         else:
-            projname = click.prompt('Enter a project to add the task to')
+            projname = click.prompt(\
+                    'Enter a project to add the task to')
 
-    ctxObjs['projObj'] = projObj.projObj(ctxObjs['confObj'],projname)
+    ctxObjs['projObj'] = projObj.\
+            projObj(ctxObjs['confObj'],projname)
     ctxObjs['projObj'].readProj()
     ctxObjs['projObj'].finishTask(taskname)
 
-@cli.group(help='Show a gantt chart with current progress')
+@cli.group(help=\
+        'Show a gantt chart with current progress')
 @click.pass_obj
 def gantt(confObj):
     pass
 
-@cli.group(help='Show a kanban representation of current tasks')
+@cli.group(help=\
+        'Show a kanban representation of current tasks')
 @click.pass_obj
 def kanban(confObj):
     pass
