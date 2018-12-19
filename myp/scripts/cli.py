@@ -3,8 +3,10 @@
 # Released under the GNU GPL-3
 
 import os
+import math
 import click
 import shutil
+import datetime as dt
 from colorama import Fore, Back, Style
 
 from myp import projObj
@@ -41,16 +43,45 @@ def list(ctxObjs):
     projs = ctxObjs['confObj'].\
             confDat['session']['projpath']
     termWidth, _ = click.get_terminal_size()
-    colAlt = True
+    colAlt = False
+    if not projs.items():
+        click.echo('No known projects')
+
+    listHead = ''
+    cellWidth=int(math.floor(termWidth/\
+            len(ctxObjs['confObj'].\
+            confDat['session']['listformat']))-\
+            len(ctxObjs['confObj'].confDat[\
+            'session']['listformat']))
+
+    for i in ctxObjs['confObj'].confDat['session']['listformat']:
+        listHead = listHead +'| ' + '{i:<{width}}'.\
+                format(i=i, width=cellWidth)
+
+    click.echo(Fore.WHITE+Back.BLACK+click.style(\
+            '{:{width}}'.format('='*termWidth,\
+            width=termWidth),bold=True, reverse=colAlt))
+    click.echo(Fore.WHITE+Back.BLACK+click.style(listHead,\
+            bold=True, reverse=colAlt))
+    click.echo(Fore.WHITE+Back.BLACK+click.style(\
+            '{:{width}}'.format('='*termWidth,\
+            width=termWidth),bold=True, reverse=colAlt))
+    colAlt = not colAlt
     for keys, value in projs.items():
-        if colAlt:
-            click.echo(Fore.WHITE+Back.BLACK+\
-                    '{i:{termWidth}}'.format(\
-                    i=keys, termWidth=int(termWidth)))
-        else:
-            click.echo(Fore.BLACK+Back.WHITE+\
-                    '{i:{termWidth}}'.format(\
-                    i=keys, termWidth=int(termWidth)))
+        listVals = ''
+        proj = projObj.projObj(ctxObjs['confObj'],keys, None)
+        proj.readProj()
+        for i, j in ctxObjs['confObj'].confDat[\
+                'session']['listformat'].items():
+            field=proj.projDat[j]
+            if j == 'datecreated':
+                field = dt.datetime.fromisoformat(field).\
+                        strftime('%Y/%m/%d')
+            listVals = listVals + '| ' + '{i:<{width}}'.format(\
+                    i=field, width=cellWidth)
+
+        click.echo(Fore.WHITE+Back.BLACK+click.style(\
+                listVals,reverse=colAlt))
 
         colAlt = not colAlt
 
@@ -127,26 +158,61 @@ def current(ctxObjs,projname):
             projname = click.prompt(\
                     'Enter a project to view its tasks')
 
-    colAlt = True
+    colAlt = False
     termWidth, _ = click.get_terminal_size()
     ctxObjs['projObj'] = projObj.projObj(\
             ctxObjs['confObj'],projname, None)
     ctxObjs['projObj'].readProj()
     ctxObjs['confObj'].makeActive(projname)
-    for key, value in ctxObjs['projObj'].projDat['tasks'].items():
-        if not value['status'] == 'finished':
-            timeSpent=float(value['timeSpent'])
-            if colAlt:
-                click.echo(Fore.WHITE+Back.BLACK+\
-                        '{key:^{termWidth}} {time:^{termWidth}.{prec}f}'.\
-                        format(key=key,time=timeSpent,\
-                        termWidth=int(termWidth/2), prec=3))
+    print(ctxObjs['projObj'].projDat[\
+            'currentformat'])
+    cellWidth=int(math.floor(termWidth/\
+            len(ctxObjs['projObj'].projDat[\
+            'currentformat']))-len(ctxObjs[\
+            'projObj'].projDat['currentformat']))
+    listHead = ''
+    for i in ctxObjs['projObj'].projDat['currentformat']:
+        listHead = listHead + '| ' + '{i:<{width}}'.format(\
+                i=i, width=cellWidth)
 
-            else:
-                click.echo(Fore.BLACK+Back.WHITE+\
-                        '{key:^{termWidth}} {time:^{termWidth}.{prec}f}'.\
-                        format(key=key,time=timeSpent,\
-                        termWidth=int(termWidth/2), prec=3))
+    click.echo(Fore.WHITE+Back.BLACK+click.style(\
+            '{:{width}}'.format('-'*termWidth,\
+            width=termWidth),bold=True, reverse=colAlt))
+    click.echo(Fore.WHITE+Back.BLACK+click.style(listHead,\
+            bold=True, reverse=colAlt))
+    click.echo(Fore.WHITE+Back.BLACK+click.style(\
+            '{:{width}}'.format('-'*termWidth,\
+            width=termWidth),bold=True, reverse=colAlt))
+    colAlt = not colAlt
+    for key, value in ctxObjs['projObj'].projDat['tasks'].items():
+        listVals = ''
+        if not value['status'] == 'finished':
+            for i, j in ctxObjs['projObj'].\
+                    projDat['currentformat'].items():
+                listVals = listVals+'| '
+                if j == 'name':
+                    field = key
+                else:
+                    field = value[j]
+
+                if j == 'datecreated':
+                    field = dt.datetime.fromisoformat(field).\
+                            strftime('%Y/%m/%d')
+                elif j == 'timeSpent':
+                    field = float(field)
+
+                if type(field) is float:
+                    listVals = listVals + '{i:<{width}}'.format(\
+                            i=field, width=cellWidth, prec=3)
+                elif type(field) is int:
+                    listVals = listVals + '{i:<{width}}'.format(\
+                            i=field, width=cellWidth, prec=2)
+                else:
+                    listVals = listVals + '{i:<{width}}'.format(\
+                            i=field, width=cellWidth)
+
+            click.echo(Fore.WHITE+Back.BLACK+click.style(\
+                    listVals, reverse=colAlt))
 
             colAlt = not colAlt
 

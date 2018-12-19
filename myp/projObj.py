@@ -68,7 +68,12 @@ class projObj:
                 },
                 'completion':'',
                 'tasks':{},
-                'notes':{}
+                'notes':{},
+                'currentformat':{\
+                    'Name':'name',
+                    'Total Time': 'timeSpent',
+                    'Assigned To': 'assignee'
+                    }
                 }
         if len(self.names) > 1:
             self.projDat['parent']=self.names[0]
