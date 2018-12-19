@@ -4,6 +4,7 @@
 
 import os
 import click
+import shutil
 from colorama import Fore, Back, Style
 
 from myp import projObj
@@ -25,9 +26,11 @@ def cli(ctx):
 @cli.command(help='Initialize a new project')
 @click.pass_obj
 @click.argument('projname')
-def proj(ctxObjs, projname):
+@click.option('-pp', '--projpath', default=None,\
+        help="Provide a separate path for the project files")
+def proj(ctxObjs, projname, projpath):
     ctxObjs['projObj'] = projObj.projObj(\
-            ctxObjs['confObj'],projname)
+            ctxObjs['confObj'],projname,projpath)
     ctxObjs['projObj'].newProj(ctxObjs['confObj'])
     ctxObjs['confObj'].makeActive(projname)
 
@@ -35,19 +38,19 @@ def proj(ctxObjs, projname):
         'List all projects in the project directory')
 @click.pass_obj
 def list(ctxObjs):
-    projs = os.listdir(ctxObjs['confObj'].\
-            confDat['session']['projpath'])
+    projs = ctxObjs['confObj'].\
+            confDat['session']['projpath']
     termWidth, _ = click.get_terminal_size()
     colAlt = True
-    for keys, value in projs:
+    for keys, value in projs.items():
         if colAlt:
             click.echo(Fore.WHITE+Back.BLACK+\
                     '{i:{termWidth}}'.format(\
-                    i=key, termWidth=int(termWidth)))
+                    i=keys, termWidth=int(termWidth)))
         else:
             click.echo(Fore.BLACK+Back.WHITE+\
                     '{i:{termWidth}}'.format(\
-                    i=key,termWidth=int(termWidth)))
+                    i=keys, termWidth=int(termWidth)))
 
         colAlt = not colAlt
 
@@ -61,6 +64,28 @@ def active(ctxObjs, projname):
         ctxObjs['confObj'].makeActive(projname)
     else:
         ctxObjs['confObj'].printActive()
+
+@cli.command(help=\
+        'Remove a project and delete the containing folder')
+@click.pass_obj
+@click.argument('projname')
+def remove(ctxObjs, projname):
+    if not projname in ctxObjs['confObj'].\
+            confDat['session']['projpath']:
+        raise click.ClickException('No project by that name')
+
+    elif click.confirm('Are you sure you want to'+\
+            ' delete this project, its folder,'+\
+            ' and contents?', abort=True):
+        
+        projDir = os.path.join(ctxObjs['confObj'].\
+            confDat['session']['projpath'][\
+            projname], projname)
+        shutil.rmtree(projDir)
+        del ctxObjs['confObj'].\
+            confDat['session']['projpath'][\
+            projname]
+        ctxObjs['confObj'].writeConf()
 
 @cli.command(help='Reset active project')
 @click.pass_obj
@@ -83,7 +108,7 @@ def task(ctxObjs,taskname,projname):
                     'Enter a project to add the task to')
 
     ctxObjs['projObj'] = projObj.\
-            projObj(ctxObjs['confObj'],projname)
+            projObj(ctxObjs['confObj'],projname, None)
     ctxObjs['projObj'].readProj()
     ctxObjs['projObj'].newTask(taskname)
     ctxObjs['confObj'].makeActive(projname)
@@ -105,7 +130,7 @@ def current(ctxObjs,projname):
     colAlt = True
     termWidth, _ = click.get_terminal_size()
     ctxObjs['projObj'] = projObj.projObj(\
-            ctxObjs['confObj'],projname)
+            ctxObjs['confObj'],projname, None)
     ctxObjs['projObj'].readProj()
     ctxObjs['confObj'].makeActive(projname)
     for key, value in ctxObjs['projObj'].projDat['tasks'].items():
@@ -141,7 +166,7 @@ def start(ctxObjs, taskname, projname):
                     'Enter a project to add the task to')
 
     ctxObjs['projObj'] = projObj.\
-            projObj(ctxObjs['confObj'],projname)
+            projObj(ctxObjs['confObj'],projname, None)
     ctxObjs['projObj'].readProj()
     ctxObjs['projObj'].startTask(taskname)
 
@@ -161,7 +186,7 @@ def stop(ctxObjs, projname, taskname):
                     'Enter a project to add the task to')
 
     ctxObjs['projObj'] = projObj.\
-            projObj(ctxObjs['confObj'],projname)
+            projObj(ctxObjs['confObj'],projname, None)
     ctxObjs['projObj'].readProj()
     ctxObjs['projObj'].stopTask(taskname)
 
@@ -181,7 +206,7 @@ def finish(ctxObjs, projname, taskname):
                     'Enter a project to add the task to')
 
     ctxObjs['projObj'] = projObj.\
-            projObj(ctxObjs['confObj'],projname)
+            projObj(ctxObjs['confObj'],projname, None)
     ctxObjs['projObj'].readProj()
     ctxObjs['projObj'].finishTask(taskname)
 

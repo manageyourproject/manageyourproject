@@ -14,6 +14,8 @@ import os
 import sys
 import click
 import configparser
+
+from ruamel.yaml import YAML
 from colorama import Fore, Back, Style
 
 class confObj:
@@ -21,46 +23,51 @@ class confObj:
         self.APP_NAME = 'myp'                           # required for default path
         self.cfg = click.get_app_dir(self.APP_NAME)     # getting default path
         self.cfgFile = os.path.join(click.get_app_dir(\
-                self.APP_NAME), 'config.ini')           # default file location
+                self.APP_NAME), 'config.yaml')           # default file location
         self.cfgProj = os.path.join(click.get_app_dir(\
                 self.APP_NAME), 'projects')             # default project path
-        self.confDat = configparser.ConfigParser(\
-                allow_no_value=True)                    # the confdat "dict"
+        self.confDat = {}                               # the confdat "dict"
         self.readConf()                                 # calls the read function
 
     def newConf(self):
+        yaml=YAML()
         if not os.path.exists(self.cfg):                # check if the config file exists
             os.makedirs(self.cfg)                       # create it if unfound
 
-        self.confDat['user'] = {                        # conf file structure
-                    '; Required Parameters':None,
-                    'name': '',
-                    'email': ''}
-        self.confDat['session'] = {
-                '; Required Parameters':None,
-                'projpath': {},
-                '; Runtime Set':None,
-                'team':{},
-                'projPrintout':[],
-                'taskPrintout':[],
-                'active': ''}
+        yaml_conf = """\
+        user:
+            # Required Prameters
+            name:
+            email:
+        session:
+            projpath:
+            active:
+            listformat:
+        """
+        self.confDat = yaml.load(yaml_conf)
 
         self.confDat['user']['name'] = click.prompt(\
                 'Full Name', type=str)                  # get user parameters
         self.confDat['user']['email'] = click.prompt(\
                 'E-mail Address', type=str)
-        self.confDat['session']['projpath'][\
-                'default'] = self.cfgProj
-        self.con
+        self.confDat['session']['defaultprojpath']=self.cfgProj
+        self.confDat['session']['projpath']={}
+        self.confDat['session']['listformat']={\
+                'Name': 'name',
+                'Owner': 'creator',
+                'Created': 'datecreated',
+                }
 
         self.writeConf()                                # write the file
 
     def writeConf(self):                                # the write file function
-        with open(self.cfgFile, 'w') as configFile:
-            self.confDat.write(configFile)
+        yaml=YAML()
+        with open(self.cfgFile, 'w') as fp:
+            yaml.dump(self.confDat, fp)
 
 
     def readConf(self):                                 # the read file function
+        yaml=YAML()
         if not os.path.isfile(self.cfgFile):
             if click.confirm('No Config file found.' +
                     '\nWould you like to create it ' +
@@ -69,7 +76,8 @@ class confObj:
                 self.newConf()                          # ask if one should be made
 
         else:
-            self.confDat.read(self.cfgFile)             # if it is found, read it
+            with open(self.cfgFile, 'r') as fp:
+                self.confDat = yaml.load(fp)             # if it is found, read it
 
     def makeActive(self, projname=None):                # mark a project as active
         self.confDat['session']['active']=projname

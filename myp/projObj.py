@@ -3,21 +3,34 @@
 # Released under the GNU GPL-3
 
 import os
-import json
 import click
-import shutil
 import datetime
+from ruamel.yaml import YAML
 
 class projObj:
-    def __init__(self, confObj, projName):
+    def __init__(self, confObj, projName, projpath):
         self.names=projName.split('.')
-        self.projDir = confObj.\
-                confDat['session']['projpath']
+        if not projName in confObj.\
+                confDat['session']['projpath']:
+            if projpath:
+                self.projDir = os.path.normpath(projpath)
+                confObj.confDat['session']['projpath'\
+                        ][projName]=projpath
+            else:
+                self.projDir = confObj.\
+                        confDat['session']['defaultprojpath']
+                confObj.confDat['session']['projpath'\
+                        ][projName]=confObj.confDat['session'\
+                        ]['defaultprojpath']
+        else:
+            self.projDir=confObj.confDat['session']['projpath'\
+                        ][projName]
+
         self.projPath = os.path.\
-                join(self.projDir,self.names[0])
+            join(self.projDir,self.names[0])
         self.projFile = os.path.\
                 join(self.projPath,\
-                self.names[-1]+'.json')
+                self.names[-1]+'.yaml')
 
         self.projDat=None
 
@@ -53,12 +66,13 @@ class projObj:
                         'cost':'0'
                     },
                 },
+                'completion':'',
                 'tasks':{},
                 'notes':{}
                 }
         if len(self.names) > 1:
             self.projDat['parent']=self.names[0]
-            parObj = projObj(confObj, self.names[0])
+            parObj = projObj(confObj, self.names[0], None)
             if not os.path.isfile(self.projPath):
                 parObj.newProj(confObj)
 
@@ -69,17 +83,18 @@ class projObj:
         self.writeProj()
         
     def writeProj(self):
+        yaml = YAML()
         with open(self.projFile, 'w') as fp:
-            json.dump(self.projDat, fp, indent=4,\
-                    separators=(',',':'))
+            yaml.dump(self.projDat, fp)
 
     def readProj(self):
+        yaml = YAML()
         if not os.path.isfile(self.projFile):
             raise click.ClickException(\
                     'No project/subproject by that name')
         else:
             with open(self.projFile, 'r') as fp:
-                self.projDat = json.load(fp)
+                self.projDat = yaml.load(fp)
 
     def newTask(self, taskName):
         taskName=taskName.split('.')

@@ -19,7 +19,7 @@ setuptools.setup(
             'click',
             'configparser',
             'networkx',
-            'pyyaml',
+            'ruamel.yaml',
         ],
         packages=setuptools.find_packages(),
         classifiers=[
