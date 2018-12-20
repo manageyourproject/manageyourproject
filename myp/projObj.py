@@ -35,16 +35,13 @@ class projObj:
         self.projDat=None
 
     def newProj(self, confObj):
-        if not os.path.exists(self.projDir):
-            os.makedirs(self.projDir)
-
         if len(self.names) > 1 and \
                 self.names[0]==self.names[-1]:
             raise click.ClickException(\
                     'Can\'t have identically '+\
                     'named project and subproject')
 
-        if os.path.isfile(self.projPath):
+        if os.path.isfile(self.projFile):
             if click.confirm('Project Already Exists.' +
                     '\nWould you like to overwrte it?',
                     abort=True):
@@ -78,7 +75,10 @@ class projObj:
         if len(self.names) > 1:
             self.projDat['parent']=self.names[0]
             parObj = projObj(confObj, self.names[0], None)
-            if not os.path.isfile(self.projPath):
+            print(os.path.join(self.projPath,\
+                    self.names[0]))
+            if os.path.isfile(os.path.join(self.projPath,\
+                    self.names[0])):
                 parObj.newProj(confObj)
 
             parObj.readProj()
