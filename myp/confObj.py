@@ -29,34 +29,38 @@ class confObj:
         self.confDat = {}                               # the confdat "dict"
         self.readConf()                                 # calls the read function
 
+    def defaultConf(self):
+        defaultConf = {
+                'user':{
+                'name':'',
+                'email':'',
+                'cost':0,
+            },
+            'session':{
+                'defaultprojpath':'',
+                'projpath':{},
+                'active':'',
+                'listformat':{
+                    'Name': 'name',
+                    'Owner': 'creator',
+                    'Created': 'datecreated',
+                },
+            }
+        }
+        return defaultConf
+
     def newConf(self):
         yaml=YAML()
         if not os.path.exists(self.cfg):                # check if the config file exists
             os.makedirs(self.cfg)                       # create it if unfound
 
-        yaml_conf = """\
-        user:
-            # Required Prameters
-            name:
-            email:
-        session:
-            projpath:
-            active:
-            listformat:
-        """
-        self.confDat = yaml.load(yaml_conf)
+        self.confDat = self.defaultConf()
 
         self.confDat['user']['name'] = click.prompt(\
                 'Full Name', type=str)                  # get user parameters
         self.confDat['user']['email'] = click.prompt(\
                 'E-mail Address', type=str)
         self.confDat['session']['defaultprojpath']=self.cfgProj
-        self.confDat['session']['projpath']={}
-        self.confDat['session']['listformat']={\
-                'Name': 'name',
-                'Owner': 'creator',
-                'Created': 'datecreated',
-                }
 
         self.writeConf()                                # write the file
 

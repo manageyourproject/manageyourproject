@@ -7,6 +7,8 @@ import math
 import click
 import shutil
 import datetime as dt
+from ruamel.yaml import YAML
+from collections import OrderedDict
 from colorama import Fore, Back, Style
 
 from myp import projObj
@@ -50,9 +52,7 @@ def list(ctxObjs):
     listHead = ''
     cellWidth=int(math.floor(termWidth/\
             len(ctxObjs['confObj'].\
-            confDat['session']['listformat']))-\
-            len(ctxObjs['confObj'].confDat[\
-            'session']['listformat']))
+            confDat['session']['listformat']))-2)
 
     for i in ctxObjs['confObj'].confDat['session']['listformat']:
         listHead = listHead +'| ' + '{i:<{width}}'.\
@@ -73,6 +73,7 @@ def list(ctxObjs):
         proj.readProj()
         for i, j in ctxObjs['confObj'].confDat[\
                 'session']['listformat'].items():
+            
             field=proj.projDat[j]
             if j == 'datecreated':
                 field = dt.datetime.fromisoformat(field).\
@@ -101,9 +102,23 @@ def active(ctxObjs, projname):
 @click.pass_obj
 @click.argument('projname')
 def remove(ctxObjs, projname):
-    if not projname in ctxObjs['confObj'].\
+    projname = projname.split('.')
+    if not projname[-1] in ctxObjs['confObj'].\
             confDat['session']['projpath']:
         raise click.ClickException('No project by that name')
+
+    if len(projname)>1:
+        if click.confirm('Are you sure you want to'+\
+                ' delete this subproject', abort=True):
+
+            projDir = os.path.join(ctxObjs['confObj'].\
+                confDat['session']['projpath'][\
+                projname], projname[0], projname[-1]+'.yaml')
+            parObj = projObj.projObj(ctxObjs['confObj'],\
+                    projname[0], None)
+            parObj.readProj()
+            parObj.projDat['children'].remove(projname[-1])
+            parObj.writeProj()
 
     elif click.confirm('Are you sure you want to'+\
             ' delete this project, its folder,'+\
@@ -111,12 +126,38 @@ def remove(ctxObjs, projname):
         
         projDir = os.path.join(ctxObjs['confObj'].\
             confDat['session']['projpath'][\
-            projname], projname)
+            projname[0]], projname[0])
         shutil.rmtree(projDir)
-        del ctxObjs['confObj'].\
-            confDat['session']['projpath'][\
-            projname]
-        ctxObjs['confObj'].writeConf()
+
+    del ctxObjs['confObj'].\
+        confDat['session']['projpath'][\
+        projname[0]]
+
+    if ctxObjs['confObj'].confDat['session']['active']==projname[-1]:
+        ctxObjs['confObj'].makeActive()
+
+    ctxObjs['confObj'].writeConf()
+
+@cli.command(help='Delete a task')
+@click.pass_obj
+@click.argument('taskname', required=True)
+@click.option('-pn', '--projname', default=None,\
+        help='Name of the project to delete the task from')
+def delete(ctxObjs,taskname,projname):
+    if not projname:
+        if ctxObjs['confObj'].\
+                confDat['session']['active']:
+            projname = ctxObjs['confObj'].\
+                    confDat['session']['active']
+        else:
+            projname = click.prompt(\
+                    'Enter a project to delete the task from')
+
+    
+    ctxObjs['projObj'] = projObj.\
+            projObj(ctxObjs['confObj'],projname, None)
+    ctxObjs['projObj'].readProj()
+    ctxObjs['projObj'].deleteTask(taskname)
 
 @cli.command(help='Reset active project')
 @click.pass_obj
@@ -128,7 +169,9 @@ def reset(ctxObjs):
 @click.argument('taskname', required=True)
 @click.option('-pn', '--projname', default=None,\
         help='Name of the project to add the task to')
-def task(ctxObjs,taskname,projname):
+@click.option('-ta', '--assignee', default=None, help=\
+        'Team member the task is assigned to')
+def task(ctxObjs,taskname,projname, assignee):
     if not projname:
         if ctxObjs['confObj'].\
                 confDat['session']['active']:
@@ -141,7 +184,7 @@ def task(ctxObjs,taskname,projname):
     ctxObjs['projObj'] = projObj.\
             projObj(ctxObjs['confObj'],projname, None)
     ctxObjs['projObj'].readProj()
-    ctxObjs['projObj'].newTask(taskname)
+    ctxObjs['projObj'].newTask(taskname, assignee)
     ctxObjs['confObj'].makeActive(projname)
 
 @cli.command(help='List tasks in active project')
@@ -164,12 +207,9 @@ def current(ctxObjs,projname):
             ctxObjs['confObj'],projname, None)
     ctxObjs['projObj'].readProj()
     ctxObjs['confObj'].makeActive(projname)
-    print(ctxObjs['projObj'].projDat[\
-            'currentformat'])
     cellWidth=int(math.floor(termWidth/\
             len(ctxObjs['projObj'].projDat[\
-            'currentformat']))-len(ctxObjs[\
-            'projObj'].projDat['currentformat']))
+            'currentformat']))-2)
     listHead = ''
     for i in ctxObjs['projObj'].projDat['currentformat']:
         listHead = listHead + '| ' + '{i:<{width}}'.format(\
@@ -200,6 +240,11 @@ def current(ctxObjs,projname):
                             strftime('%Y/%m/%d')
                 elif j == 'timeSpent':
                     field = float(field)
+                elif j == 'assignee':
+                    assignees = ''
+                    for k in dict(value[j]).keys():
+                        assignees = assignees + k
+                    field = assignees
 
                 if type(field) is float:
                     listVals = listVals + '{i:<{width}}'.format(\
@@ -254,7 +299,7 @@ def stop(ctxObjs, projname, taskname):
     ctxObjs['projObj'] = projObj.\
             projObj(ctxObjs['confObj'],projname, None)
     ctxObjs['projObj'].readProj()
-    ctxObjs['projObj'].stopTask(taskname)
+    ctxObjs['projObj'].stopTask(taskname, ctxObjs['confObj'])
 
 @cli.command(help='Stop tracking time for task')
 @click.pass_obj
@@ -274,7 +319,55 @@ def finish(ctxObjs, projname, taskname):
     ctxObjs['projObj'] = projObj.\
             projObj(ctxObjs['confObj'],projname, None)
     ctxObjs['projObj'].readProj()
-    ctxObjs['projObj'].finishTask(taskname)
+    ctxObjs['projObj'].finishTask(taskname, ctxObjs['confObj'])
+
+
+@cli.command(help='Promote a task/subtask to project/subproject')
+@click.pass_obj
+@click.argument('taskname')
+@click.option('-pp', '--parentproj', default=None,\
+        help='Name of parent project. (Promote to subproject)')
+@click.option('-pn', '--projname', default=None,\
+        help='Name of the project. If different from current name')
+def promote(ctxObjs, taskname, projname, parentproj):
+    pass
+
+@cli.command(help='Demote a project/subproject to a task/subtask')
+@click.pass_obj
+@click.argument('projname')
+@click.option('-pt', '--parenttask', default=None,\
+        help='Name of parent task. (Demote to subtask)')
+@click.option('-tn', '--taskname', default=None,\
+        help='Name of the task')
+def demote(ctxObjs, projname, taskname, parenttask):
+    pass
+
+
+@cli.command(help='Create a copy project. Also can be used to make a project parent-less or make it a child of another project')
+@click.pass_obj
+@click.argument('projname')
+@click.option('-pn', '--newprojname', default=None,\
+        help='Name of the new holding the task')
+@click.option('--delete', 'deleteold', flag_value=True, default=True,\
+        help='Delete the source project')
+@click.option('--keep', 'deleteold', flag_value=False,\
+        help='Keep the source project')
+def copy(ctxObjs, projname, newprojname, deleteold):
+    pass
+
+@cli.command(help='Create a duplicate task. Also used to make a task parent-less or a child of another one')
+@click.pass_obj
+@click.argument('taskname')
+@click.option('-pn', '--projname', default=None,\
+        help='Name of the project holding the task')
+@click.option('-tn', '--newtaskname', default=None,\
+        help='Name of the new task')
+@click.option('--delete', 'deleteold', flag_value=True, default=True,\
+        help='Delete the source task')
+@click.option('--keep', 'deleteold', flag_value=False,\
+        help='Keep the source task')
+def duplicate(ctxObjs, taskname, projname, newtaskname, deleteold):
+    pass
 
 @cli.group(help=\
         'Show a gantt chart with current progress')
@@ -298,19 +391,9 @@ def burndown(confObj):
 def publish(confObj):
     pass
 
-@cli.group(help='List all tracked projects')
-@click.pass_obj
-def listproj(confObj):
-    pass
-
 @cli.group(help='Show status of project')
 @click.pass_obj
 def status(confObj):
-    pass
-
-@cli.group(help='Show upcoming work to be done')
-@click.pass_obj
-def next(confObj):
     pass
 
 @cli.group(help='show a summary for the past week')
