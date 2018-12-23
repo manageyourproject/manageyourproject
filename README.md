@@ -20,6 +20,17 @@ pip3 install --user --editable ./
 NOTE: myp has only been tested with python 3 on a unix system. It is unknown if it will work on a windows machine, and suspected that it will not work with python <3.x
 
 ## Usage
+MYP is run using 
+```bash
+myp <command>
+```
+Typing 
+```bash
+myp --help
+```
+will give a list of commands and basic information on them. 
+
+Note: not all commands will work, and some have yet to be implemented. Future versions may also change their operaton.
 
 ## Why?
 I like working from terminal. As my projects grew more complex, and I needed to provide visuals like gantt charts, I wanted a project management/time tracking/todo list that i could use from the command line. While there are projects that do pieces of this, (see [taskwarrior](https://github.com/GothenbugBitFactory/taskwarrior), its related project [timewarrior](https://github.com/GothenburgBitFactory/timewarrior) and [taskjuggler](https://github.com/taskjuggler/taskjuggler) etc.) the options for a complete tool with all the features I needed/wanted was lacking.
