@@ -67,7 +67,7 @@ def list(ctxObjs):
             '{:{width}}'.format('='*termWidth,\
             width=termWidth),bold=True, reverse=colAlt))
     colAlt = not colAlt
-    for keys, value in projs.items():
+    for keys, value in sorted(projs.items()):
         listVals = ''
         proj = projObj.projObj(ctxObjs['confObj'],keys, None)
         proj.readProj()
@@ -78,8 +78,13 @@ def list(ctxObjs):
             if j == 'datecreated':
                 field = dt.datetime.fromisoformat(field).\
                         strftime('%Y/%m/%d')
-            listVals = listVals + '| ' + '{i:<{width}}'.format(\
-                    i=field, width=cellWidth)
+
+            if j == 'name' and proj.projDat['parent']:
+                listVals = listVals + '|   ' + '{i:<{width}}'.format(\
+                        i=field, width=cellWidth-2)
+            else:
+                listVals = listVals + '| ' + '{i:<{width}}'.format(\
+                        i=field, width=cellWidth)
 
         click.echo(Fore.WHITE+Back.BLACK+click.style(\
                 listVals,reverse=colAlt))
@@ -93,7 +98,10 @@ def list(ctxObjs):
 @click.option('-pn', '--projname', default=None)
 def active(ctxObjs, projname):
     if projname:
-        ctxObjs['confObj'].makeActive(projname)
+        if projname in ctxObjs['confObj'].confDat['session']['projpath']:
+            ctxObjs['confObj'].makeActive(projname)
+        else:
+            raise click.ClickException('No project by that name')
     else:
         ctxObjs['confObj'].printActive()
 
@@ -102,8 +110,10 @@ def active(ctxObjs, projname):
 @click.pass_obj
 @click.argument('projname')
 def remove(ctxObjs, projname):
+    projnamefull = projname
     projname = projname.split('.')
-    if not projname[-1] in ctxObjs['confObj'].\
+    childList=[]
+    if not projnamefull in ctxObjs['confObj'].\
             confDat['session']['projpath']:
         raise click.ClickException('No project by that name')
 
@@ -113,7 +123,8 @@ def remove(ctxObjs, projname):
 
             projDir = os.path.join(ctxObjs['confObj'].\
                 confDat['session']['projpath'][\
-                projname], projname[0], projname[-1]+'.yaml')
+                projnamefull], projname[0], projname[-1]+'.yaml')
+            os.remove(projDir)
             parObj = projObj.projObj(ctxObjs['confObj'],\
                     projname[0], None)
             parObj.readProj()
@@ -124,16 +135,25 @@ def remove(ctxObjs, projname):
             ' delete this project, its folder,'+\
             ' and contents?', abort=True):
         
+        parObj = projObj.projObj(ctxObjs['confObj'],\
+                projnamefull, None)
+        parObj.readProj()
+        childList = parObj.projDat['children']
         projDir = os.path.join(ctxObjs['confObj'].\
             confDat['session']['projpath'][\
-            projname[0]], projname[0])
+            projnamefull], projnamefull)
         shutil.rmtree(projDir)
+
+        if childList:
+            for i in childList:
+                del ctxObjs['confObj'].confDat['session'\
+                        ]['projpath']['.'.join([projnamefull,i])]
 
     del ctxObjs['confObj'].\
         confDat['session']['projpath'][\
-        projname[0]]
+        projnamefull]
 
-    if ctxObjs['confObj'].confDat['session']['active']==projname[-1]:
+    if ctxObjs['confObj'].confDat['session']['active']==projnamefull:
         ctxObjs['confObj'].makeActive()
 
     ctxObjs['confObj'].writeConf()
@@ -210,6 +230,7 @@ def current(ctxObjs,projname):
     cellWidth=int(math.floor(termWidth/\
             len(ctxObjs['projObj'].projDat[\
             'currentformat']))-2)
+    listDict={}
     listHead = ''
     for i in ctxObjs['projObj'].projDat['currentformat']:
         listHead = listHead + '| ' + '{i:<{width}}'.format(\
@@ -231,6 +252,7 @@ def current(ctxObjs,projname):
                     projDat['currentformat'].items():
                 listVals = listVals+'| '
                 if j == 'name':
+                    listDictKey = key
                     field = key
                 else:
                     field = value[j]
@@ -246,7 +268,11 @@ def current(ctxObjs,projname):
                         assignees = assignees + k
                     field = assignees
 
-                if type(field) is float:
+                if j == 'name' and value['parent']:
+                    listDictKey = '.'.join([value['parent'], listDictKey])
+                    listVals = listVals + '  ' + '{i:<{width}}'.format(\
+                            i=field, width=cellWidth-2, prec=3)
+                elif type(field) is float:
                     listVals = listVals + '{i:<{width}}'.format(\
                             i=field, width=cellWidth, prec=3)
                 elif type(field) is int:
@@ -256,10 +282,13 @@ def current(ctxObjs,projname):
                     listVals = listVals + '{i:<{width}}'.format(\
                             i=field, width=cellWidth)
 
-            click.echo(Fore.WHITE+Back.BLACK+click.style(\
-                    listVals, reverse=colAlt))
+            listDict[listDictKey]=listVals
 
-            colAlt = not colAlt
+    for key, value in sorted(listDict.items()):
+        click.echo(Fore.WHITE+Back.BLACK+click.style(\
+                value, reverse=colAlt))
+
+        colAlt = not colAlt
 
 @cli.command(help='Start tracking time for task')
 @click.pass_obj

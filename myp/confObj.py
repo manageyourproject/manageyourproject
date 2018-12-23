@@ -41,7 +41,7 @@ class confObj:
                 'projpath':{},
                 'active':'',
                 'listformat':{
-                    'Name': 'name',
+                    'Project Name': 'name',
                     'Owner': 'creator',
                     'Created': 'datecreated',
                 },

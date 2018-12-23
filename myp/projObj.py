@@ -51,7 +51,7 @@ class projObj:
             'milestones':{},
             'assets':{},
             'currentformat':{\
-                'Name':'name',
+                'Task Name':'name',
                 'Total Time': 'timeSpent',
                 'Assigned To': 'assignee'
                 }
@@ -165,7 +165,7 @@ class projObj:
                 if not taskName[0] in self.projDat['tasks']:
                     if click.confirm('Parent task doesn\'t exists.\n'+\
                             'Would you like to create it?', abort=True):
-                        self.newTask(taskName[0])
+                        self.newTask(taskName[0], assignee)
 
             self.projDat['tasks'][taskName[-1]] = self.defaultTask()
             self.projDat['tasks'][taskName[-1]]['datecreated']=\
@@ -195,7 +195,7 @@ class projObj:
             if click.confirm('No task by that name'+\
                     ' exists. Would you like to create it?',\
                     abort=True):
-                self.newTask('.'.join(taskName))
+                self.newTask('.'.join(taskName), None)
         elif self.projDat['tasks'][taskName[-1]]['status'] == 'finished':
             if click.confirm('That task is already finished.\n'+\
                     'would you like to restart it?', abort=True):
@@ -267,12 +267,12 @@ class projObj:
         if not self.taskExists(taskName):
             raise click.ClickException('No task by that name exists')
         
-        if self.projDat['tasks']['parent']:
+        if self.projDat['tasks'][taskName[-1]]['parent']:
             if click.confirm('Are you sure you want to delete this subtask?',\
                     abort=True):
                 parTask = self.projDat['tasks'][taskName[-1]]['parent']
                 self.projDat['tasks'][parTask]['children'].remove(taskName[-1])
-        elif self.projDat['tasks']['children']:
+        elif self.projDat['tasks'][taskName[-1]]['children']:
             if click.confirm('Are you sure you want to delete this task and subtasks?',\
                     abort=True):
                 children = self.projDat['tasks'][taskName[-1]]['children']
