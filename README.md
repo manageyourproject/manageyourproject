@@ -20,9 +20,9 @@ pip3 install --user --editable ./
 NOTE: myp has only been tested with python 3 on a unix system. It is unknown if it will work on a windows machine, and suspected that it will not work with python <3.x
 
 ## Usage
-MYP is run using 
+MYP is run through the commandline. Once installed through pip, it is executed using 
 ```bash
-myp <command>
+myp <command> <arguments> <options>
 ```
 Typing 
 ```bash
