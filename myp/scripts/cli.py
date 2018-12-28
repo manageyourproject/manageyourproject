@@ -291,6 +291,7 @@ def current(ctxObjs,projname):
         colAlt = not colAlt
 
 @cli.command(help='Start tracking time for task')
+
 @click.pass_obj
 @click.argument('taskname', required=True)
 @click.option('-pn', '--projname', default=None,\
@@ -354,23 +355,53 @@ def finish(ctxObjs, projname, taskname):
 @cli.command(help='Promote a task/subtask to project/subproject')
 @click.pass_obj
 @click.argument('taskname')
-@click.option('-pp', '--parentproj', default=None,\
-        help='Name of parent project. (Promote to subproject)')
 @click.option('-pn', '--projname', default=None,\
         help='Name of the project. If different from current name')
-def promote(ctxObjs, taskname, projname, parentproj):
-    pass
+@click.option('-pp', '--newprojpath', default=None,\
+        help="Provide a separate path for the project files")
+def promote(ctxObjs, taskname, projname, newprojname, newprojpath):
+    if not projname:
+        if ctxObjs['confObj'].\
+                confDat['session']['active']:
+            projname = ctxObjs['confObj'].\
+                    confDat['session']['active']
+        else:
+            projname = click.prompt('Enter the project the task is in')
+
+    if not newprojname:
+        newprojname = taskname
+    
+    oldproj = projObj.projObj(ctxObjs['confObj'],projname,None)
+    oldproj.readProj()
+    taskDict = oldproj.projDat['task'][taskname]
+    newproj = projObj.projObj(\
+            ctxObjs['confObj'],newprojname,newprojpath)
+    newproj.projFromDict(ctxObjs['confObj'], taskDict)
 
 @cli.command(help='Demote a project/subproject to a task/subtask')
 @click.pass_obj
 @click.argument('projname')
-@click.option('-pt', '--parenttask', default=None,\
-        help='Name of parent task. (Demote to subtask)')
+@click.option('-pj', '--parentproj', default=None,\
+        help='Name of parent project for the new task')
 @click.option('-tn', '--taskname', default=None,\
         help='Name of the task')
-def demote(ctxObjs, projname, taskname, parenttask):
-    pass
+def demote(ctxObjs, projname, parentproj, taskname):
+    if not parentproj:
+        if ctxObjs['confObj'].confDat['session']['active'] and \
+                not ctxObjs['confObj'].confDat['session'\
+                ]['active']==projname:
+            parentproj = ctxObjs['confObj'].confDat['session']['active']
+        else:
+            projname = click.prompt('Enter the project the task is in')
 
+    if not taskname:
+        taskname = projname
+    
+    oldproj = projObj.projObj(ctxObjs['confObj'],projname,None)
+    oldproj.readProj()
+    newparproj = projObj.projObj(ctxObjs['confObj'],parentproj,None)
+    newparproj.readProj()
+    newparproj.taskFromDict(ctxObjs['confObj'], oldproj.projDat)
 
 @cli.command(help='Create a copy project. Also can be used to make a project parent-less or make it a child of another project')
 @click.pass_obj
