@@ -58,11 +58,8 @@ class projObj:
         }
         return defaultProj
 
-
-
     def projFromDict(self, confObj, projDict):
         pass
-
 
     def projExists(self):
         if len(self.names) > 1 and \
@@ -124,3 +121,5 @@ class projObj:
             with open(self.projFile, 'r') as fp:
                 self.projDat = yaml.load(fp)
 
+    def projAddTask(self, task):
+        self.projDat['tasks']

@@ -7,21 +7,23 @@ import math
 import click
 import shutil
 import datetime as dt
-from ruamel.yaml import YAML
 from collections import OrderedDict
 from colorama import Fore, Back, Style
 
-from myp import projObj
 from myp import confObj
+from myp import projObj
+from myp import taskObj
 
 @click.group(invoke_without_command=True)
 @click.version_option()
 @click.pass_context
 def cli(ctx):
+    self.APP_NAME = 'myp'                           # required for default path
+    cfg = click.get_app_dir(self.APP_NAME)     # getting default path
     if ctx.obj is None:
         ctx.obj = dict()
 
-    ctx.obj['confObj'] = confObj.confObj()
+    ctx.obj['confObj'] = confObj.confObj(cfg)
     if ctx.invoked_subcommand is None:
         ctx.obj['confObj'].printActive()
         click.echo('Type '+click.style('myp --help',\
@@ -47,7 +49,7 @@ def list(ctxObjs):
     termWidth, _ = click.get_terminal_size()
     colAlt = False
     if not projs.items():
-        click.echo('No known projects')
+        raise click.ClickException('No known projects')
 
     listHead = ''
     cellWidth=int(math.floor(termWidth/\

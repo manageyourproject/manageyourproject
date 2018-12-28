@@ -9,32 +9,9 @@ import datetime
 from ruamel.yaml import YAML
 from collections import OrderedDict
 
-class projObj:
-    def __init__(self, confObj, projName, projpath):
-        self.names=projName.split('.')
-        if not projName in confObj.\
-                confDat['session']['projpath']:
-            if projpath:
-                self.projDir = os.path.normpath(projpath)
-                confObj.confDat['session']['projpath'\
-                        ][projName]=projpath
-            else:
-                self.projDir = confObj.\
-                        confDat['session']['defaultprojpath']
-                confObj.confDat['session']['projpath'\
-                        ][projName]=confObj.confDat['session'\
-                        ]['defaultprojpath']
-        else:
-            self.projDir=confObj.confDat['session']['projpath'\
-                        ][projName]
-
-        self.projPath = os.path.\
-            join(self.projDir,self.names[0])
-        self.projFile = os.path.\
-                join(self.projPath,\
-                self.names[-1]+'.yaml')
-
-        self.projDat=None
+class taskObj:
+    def __init__(self, confObj, parProj, taskname):
+        self.taskNames=taskname.split('.')
 
     def defaultTask(self):
         defaultTask = {

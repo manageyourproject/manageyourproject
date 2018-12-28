@@ -13,19 +13,14 @@
 import os
 import sys
 import click
-import configparser
-
 from ruamel.yaml import YAML
 from colorama import Fore, Back, Style
 
 class confObj:
-    def __init__(self):
-        self.APP_NAME = 'myp'                           # required for default path
-        self.cfg = click.get_app_dir(self.APP_NAME)     # getting default path
-        self.cfgFile = os.path.join(click.get_app_dir(\
-                self.APP_NAME), 'config.yaml')           # default file location
-        self.cfgProj = os.path.join(click.get_app_dir(\
-                self.APP_NAME), 'projects')             # default project path
+    def __init__(self, progPath):
+        self.cfg = progPath     # getting default path
+        self.cfgFile = os.path.join(self.cfg, 'config.yaml')           # default file location
+        self.cfgProj = os.path.join(self.cfg, 'projects')             # default project path
         self.confDat = {}                               # the confdat "dict"
         self.readConf()                                 # calls the read function
 
