@@ -12,9 +12,6 @@
 
 import os
 import sys
-import click
-from ruamel.yaml import YAML
-from colorama import Fore, Back, Style
 
 class confObj:
     def __init__(self, progPath):
@@ -22,7 +19,6 @@ class confObj:
         self.cfgFile = os.path.join(self.cfg, 'config.yaml')           # default file location
         self.cfgProj = os.path.join(self.cfg, 'projects')             # default project path
         self.confDat = {}                               # the confdat "dict"
-        self.readConf()                                 # calls the read function
 
     def defaultConf(self):
         defaultConf = {
@@ -40,53 +36,37 @@ class confObj:
                     'Owner': 'creator',
                     'Created': 'datecreated',
                 },
+                'filestore':'yaml',
             }
         }
         return defaultConf
 
-    def newConf(self):
-        yaml=YAML()
+    def loadDat(self, dat):
+        self.confDat = dat
+
+    def getDat(self):
+        return self.confDat
+
+    def newConf(self, name, email):
         if not os.path.exists(self.cfg):                # check if the config file exists
             os.makedirs(self.cfg)                       # create it if unfound
 
         self.confDat = self.defaultConf()
 
-        self.confDat['user']['name'] = click.prompt(\
-                'Full Name', type=str)                  # get user parameters
-        self.confDat['user']['email'] = click.prompt(\
-                'E-mail Address', type=str)
+        self.confDat['user']['name'] = name
+        self.confDat['user']['email'] = email
         self.confDat['session']['defaultprojpath']=self.cfgProj
 
-        self.writeConf()                                # write the file
+        self.getDat()                                # write the file
 
-    def writeConf(self):                                # the write file function
-        yaml=YAML()
-        with open(self.cfgFile, 'w') as fp:
-            yaml.dump(self.confDat, fp)
-
-
-    def readConf(self):                                 # the read file function
-        yaml=YAML()
-        if not os.path.isfile(self.cfgFile):
-            if click.confirm('No Config file found.' +
-                    '\nWould you like to create it ' +
-                    'and enter a user and email address?',
-                    abort=True):                        # if no file can be found
-                self.newConf()                          # ask if one should be made
-
-        else:
-            with open(self.cfgFile, 'r') as fp:
-                self.confDat = yaml.load(fp)             # if it is found, read it
+    def confExists(self):
+        return os.path.isfile(self.cfgFile)
 
     def makeActive(self, projname=None):                # mark a project as active
         self.confDat['session']['active']=projname
         self.writeConf()
 
-    def printActive(self):                              # print the active project
-        if self.confDat['session']['active']:
-            click.echo('Current active project: ' +\
-                    self.confDat['session']['active'])
-        else:
-            click.echo('There are no currently'+\
-                    ' active projects')                 # ...if there is one
+    def giveActive(self):                              # print the active project
+        return self.confDat['session']['active']
+
 

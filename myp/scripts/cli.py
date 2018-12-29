@@ -13,19 +13,32 @@ from colorama import Fore, Back, Style
 from myp import confObj
 from myp import projObj
 from myp import taskObj
+from myp.script import datIO
+from myp.script import cliCom
 
 @click.group(invoke_without_command=True)
 @click.version_option()
 @click.pass_context
 def cli(ctx):
-    self.APP_NAME = 'myp'                           # required for default path
-    cfg = click.get_app_dir(self.APP_NAME)     # getting default path
+    self.APP_NAME = 'myp'                   # required for default path
+    cfg = click.get_app_dir(self.APP_NAME)  # getting default path
     if ctx.obj is None:
         ctx.obj = dict()
 
     ctx.obj['confObj'] = confObj.confObj(cfg)
+    if (not ctx.obj['confObj'].confExists()) and click.confirm(\
+            'No Config file found.' +\
+            '\nWould you like to create it ' +\
+            'and enter a user and email address?',\
+            abort=True):
+        confDat = ctx.obj['confObj'].newConf(\
+                click.prompt('Full Name', type=str),\
+                click.prompt('E-mail Address', type=str))
+        
+
+    ctx.obj['confObj'].loadDat()           # calls the read function
     if ctx.invoked_subcommand is None:
-        ctx.obj['confObj'].printActive()
+        cliCom.printActive(ctx.obj['confObj'].getActive())
         click.echo('Type '+click.style('myp --help',\
                 fg='red',bold=True)+' for usage')
 
