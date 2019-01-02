@@ -28,6 +28,7 @@ class confObj:
                 'cost':0,
             },
             'session':{
+                'defaultstoretype':'yaml',
                 'defaultprojpath':'',
                 'projs':{},
                 'active':'',
@@ -53,4 +54,8 @@ class confObj:
     def dumpDat(self):
         return [self.confDat, self.cfgFile]
 
-
+    def trackProj(projName, storeType, storeLoc):
+        self.confDat['session']['projs'][projName]={
+                'storeType':storeType,
+                'storeLoc':storeLoc,
+                }

@@ -65,14 +65,17 @@ def new(ctx):
 @new.command(help='Initialize a new project')
 @click.pass_obj
 @click.argument('projname')
-@click.option('-pp', '--projpath', default=None,\
-        help="Provide a separate path for the project files")
-def proj(ctxObjs, projname, projpath):
-    ctxObjs['projObj'] = projObj.projObj(\
-            ctxObjs['confObj'],projname,projpath)
-    ctxObjs['projObj'].newProj(ctxObjs['confObj'])
-    ctxObjs['confObj'].makeActive(projname)
-
+@click.option('-st', '--storetype', default=None,\
+        help='Type of store for the project')
+@click.option('-sl', '--storeloc', default=None,\
+        help='Location of the store for the project')
+@click.option('-f', '--force', is_flag=True,\
+        help='Location of the store for the project')
+def proj(ctxObjs, projname, storetype, storeloc, force):
+    output = main.newProj(ctxObjs['confObj'], projname, storetype, storeloc, force)
+    if isinstance(output, str):
+        raise click.ClickException(output)
+    
 @new.command(help='Create a new task')
 @click.pass_obj
 @click.argument('taskname', required=True)
