@@ -5,6 +5,13 @@
 
 import click
 
+def proTaExist():
+    if len(self.names) > 1 and \
+            self.names[0]==self.names[-1]:
+        raise click.ClickException(\
+                'Can\'t have identically '+\
+                'named project and subproject')
+
 def printActive(active):
     if active:
         click.echo('Current active project: ' + active)

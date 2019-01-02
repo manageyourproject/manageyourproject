@@ -61,14 +61,6 @@ class projObj:
     def projFromDict(self, confObj, projDict):
         pass
 
-    def projExists(self):
-        if len(self.names) > 1 and \
-                self.names[0]==self.names[-1]:
-            raise click.ClickException(\
-                    'Can\'t have identically '+\
-                    'named project and subproject')
-
-        return os.path.isfile(self.projFile)
 
     def newProj(self, confObj):
         if self.projExists():

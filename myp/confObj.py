@@ -18,7 +18,7 @@ class confObj:
         self.cfg = progPath     # getting default path
         self.cfgFile = os.path.join(self.cfg, 'config.yaml')           # default file location
         self.cfgProj = os.path.join(self.cfg, 'projects')             # default project path
-        self.confDat = {}                               # the confdat "dict"
+        self.confDat = {}
 
     def defaultConf(self):
         defaultConf = {
@@ -29,7 +29,7 @@ class confObj:
             },
             'session':{
                 'defaultprojpath':'',
-                'projpath':{},
+                'projs':{},
                 'active':'',
                 'listformat':{
                     'Project Name': 'name',
@@ -47,7 +47,10 @@ class confObj:
     def getDat(self):
         return self.confDat
 
-    def newConf(self, name, email):
+    def getConfLoc(self):
+        return self.cfgFile
+
+    def newConfDat(self, name, email):
         if not os.path.exists(self.cfg):                # check if the config file exists
             os.makedirs(self.cfg)                       # create it if unfound
 
@@ -56,8 +59,6 @@ class confObj:
         self.confDat['user']['name'] = name
         self.confDat['user']['email'] = email
         self.confDat['session']['defaultprojpath']=self.cfgProj
-
-        self.getDat()                                # write the file
 
     def confExists(self):
         return os.path.isfile(self.cfgFile)
@@ -69,4 +70,6 @@ class confObj:
     def giveActive(self):                              # print the active project
         return self.confDat['session']['active']
 
+    def projExists(self):
 
+        return os.path.isfile(self.projFile)

@@ -13,15 +13,15 @@ from colorama import Fore, Back, Style
 from myp import confObj
 from myp import projObj
 from myp import taskObj
-from myp.script import datIO
-from myp.script import cliCom
+from myp.scripts import datIO
+from myp.scripts import cliCom
 
 @click.group(invoke_without_command=True)
 @click.version_option()
 @click.pass_context
 def cli(ctx):
-    self.APP_NAME = 'myp'                   # required for default path
-    cfg = click.get_app_dir(self.APP_NAME)  # getting default path
+    APP_NAME = 'myp'                   # required for default path
+    cfg = click.get_app_dir(APP_NAME)  # getting default path
     if ctx.obj is None:
         ctx.obj = dict()
 
@@ -31,14 +31,18 @@ def cli(ctx):
             '\nWould you like to create it ' +\
             'and enter a user and email address?',\
             abort=True):
-        confDat = ctx.obj['confObj'].newConf(\
+        ctx.obj['confObj'].newConfDat(\
                 click.prompt('Full Name', type=str),\
                 click.prompt('E-mail Address', type=str))
-        
+        confDat = ctx.obj['confObj'].getDat()
+        datIO.yamlWrite(ctx.obj['confObj'].getConfLoc(),confDat)
 
-    ctx.obj['confObj'].loadDat()           # calls the read function
+    else:
+        confDat = datIO.yamlRead(ctx.obj['confObj'].getConfLoc())
+        ctx.obj['confObj'].loadDat(confDat)           # calls the read function
+
     if ctx.invoked_subcommand is None:
-        cliCom.printActive(ctx.obj['confObj'].getActive())
+        cliCom.printActive(ctx.obj['confObj'].giveActive())
         click.echo('Type '+click.style('myp --help',\
                 fg='red',bold=True)+' for usage')
 
