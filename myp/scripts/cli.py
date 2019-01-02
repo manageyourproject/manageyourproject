@@ -7,23 +7,36 @@ import math
 import click
 import shutil
 import datetime as dt
-from ruamel.yaml import YAML
-from collections import OrderedDict
 from colorama import Fore, Back, Style
 
-from myp import projObj
-from myp import confObj
+from myp import main
 
 @click.group(invoke_without_command=True)
 @click.version_option()
 @click.pass_context
 def cli(ctx):
+    APP_NAME = 'myp'                           # required for default path
+    cfg = click.get_app_dir(APP_NAME)     # getting default path
     if ctx.obj is None:
         ctx.obj = dict()
 
-    ctx.obj['confObj'] = confObj.confObj()
+    ctx.obj['confObj'] = main.initWConf(cfg)
+
+    if isinstance(ctx.obj['confObj'], str):
+        click.echo(ctx.obj['confObj'])
+        if click.confirm('Would you like to create it ' +
+                'and enter a user and email address?',
+                abort=True):                        # if no file can be found
+
+            if not os.path.exists(cfg):                # check if the config file exists
+                os.makedirs(cfg)                       # create it if unfound
+
+            name = click.prompt('Name', type=str)
+            email = click.prompt('E-mail Address', type=str)
+            ctx.obj['confObj'] = main.makeConf(cfg, name, email)
+
     if ctx.invoked_subcommand is None:
-        ctx.obj['confObj'].printActive()
+        click.echo(main.getActive(ctx.obj['confObj']))
         click.echo('Type '+click.style('myp --help',\
                 fg='red',bold=True)+' for usage')
 
@@ -33,18 +46,16 @@ def cli(ctx):
 @click.option('-pn', '--projname', default=None)
 def active(ctxObjs, projname):
     if projname:
-        if projname in ctxObjs['confObj'].confDat['session']['projpath']:
-            ctxObjs['confObj'].makeActive(projname)
-        else:
-            raise click.ClickException('No project by that name')
-    else:
-        ctxObjs['confObj'].printActive()
+        active = main.makeActive(ctxObjs['confObj'], projname)
+        if isinstance(active, str):
+            raise click.ClickException(active)
 
+    click.echo(main.getActive(ctxObjs['confObj']))
 
 @cli.command(help='Reset active project')
 @click.pass_obj
 def reset(ctxObjs):
-    ctxObjs['confObj'].makeActive()
+    active = main.makeActive(ctxObjs['confObj'], None)
 
 @cli.group()
 @click.pass_context
@@ -94,7 +105,7 @@ def list(ctx):
 @click.pass_obj
 def proj(ctxObjs):
     projs = ctxObjs['confObj'].\
-            confDat['session']['projpath']
+            confDat['session']['projs']
     termWidth, _ = click.get_terminal_size()
     colAlt = False
     if not projs.items():
@@ -239,7 +250,7 @@ def proj(ctxObjs, projname):
     projname = projname.split('.')
     childList=[]
     if not projnamefull in ctxObjs['confObj'].\
-            confDat['session']['projpath']:
+            confDat['session']['projs']:
         raise click.ClickException('No project by that name')
 
     if len(projname)>1:
@@ -247,7 +258,7 @@ def proj(ctxObjs, projname):
                 ' delete this subproject', abort=True):
 
             projDir = os.path.join(ctxObjs['confObj'].\
-                confDat['session']['projpath'][\
+                confDat['session']['projs'][\
                 projnamefull], projname[0], projname[-1]+'.yaml')
             os.remove(projDir)
             parObj = projObj.projObj(ctxObjs['confObj'],\
@@ -265,17 +276,17 @@ def proj(ctxObjs, projname):
         parObj.readProj()
         childList = parObj.projDat['children']
         projDir = os.path.join(ctxObjs['confObj'].\
-            confDat['session']['projpath'][\
+            confDat['session']['projs'][\
             projnamefull], projnamefull)
         shutil.rmtree(projDir)
 
         if childList:
             for i in childList:
                 del ctxObjs['confObj'].confDat['session'\
-                        ]['projpath']['.'.join([projnamefull,i])]
+                        ]['projs']['.'.join([projnamefull,i])]
 
     del ctxObjs['confObj'].\
-        confDat['session']['projpath'][\
+        confDat['session']['projs'][\
         projnamefull]
 
     if ctxObjs['confObj'].confDat['session']['active']==projnamefull:

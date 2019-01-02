@@ -1,3 +1,5 @@
+*.pyc
 myp.egg-info
 myp/__pycache__
 myp/scripts/__pycache__/
+myp/utilities/__pycache__/
