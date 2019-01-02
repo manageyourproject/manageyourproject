@@ -27,7 +27,31 @@ def cli(ctx):
         click.echo('Type '+click.style('myp --help',\
                 fg='red',bold=True)+' for usage')
 
-@cli.command(help='Initialize a new project')
+@cli.command(help=\
+        'Get currently active project, or activate a project')
+@click.pass_obj
+@click.option('-pn', '--projname', default=None)
+def active(ctxObjs, projname):
+    if projname:
+        if projname in ctxObjs['confObj'].confDat['session']['projpath']:
+            ctxObjs['confObj'].makeActive(projname)
+        else:
+            raise click.ClickException('No project by that name')
+    else:
+        ctxObjs['confObj'].printActive()
+
+
+@cli.command(help='Reset active project')
+@click.pass_obj
+def reset(ctxObjs):
+    ctxObjs['confObj'].makeActive()
+
+@cli.group()
+@click.pass_context
+def new(ctx):
+    pass
+
+@new.command(help='Initialize a new project')
 @click.pass_obj
 @click.argument('projname')
 @click.option('-pp', '--projpath', default=None,\
@@ -38,10 +62,37 @@ def proj(ctxObjs, projname, projpath):
     ctxObjs['projObj'].newProj(ctxObjs['confObj'])
     ctxObjs['confObj'].makeActive(projname)
 
-@cli.command(help=\
-        'List all projects in the project directory')
+@new.command(help='Create a new task')
 @click.pass_obj
-def list(ctxObjs):
+@click.argument('taskname', required=True)
+@click.option('-pn', '--projname', default=None,\
+        help='Name of the project to add the task to')
+@click.option('-ta', '--assignee', default=None, help=\
+        'Team member the task is assigned to')
+def task(ctxObjs,taskname,projname, assignee):
+    if not projname:
+        if ctxObjs['confObj'].\
+                confDat['session']['active']:
+            projname = ctxObjs['confObj'].\
+                    confDat['session']['active']
+        else:
+            projname = click.prompt(\
+                    'Enter a project to add the task to')
+
+    ctxObjs['projObj'] = projObj.\
+            projObj(ctxObjs['confObj'],projname, None)
+    ctxObjs['projObj'].readProj()
+    ctxObjs['projObj'].newTask(taskname, assignee)
+    ctxObjs['confObj'].makeActive(projname)
+
+@cli.group()
+@click.pass_context
+def list(ctx):
+    pass
+
+@list.command(help='List all projects in the project directory')
+@click.pass_obj
+def proj(ctxObjs):
     projs = ctxObjs['confObj'].\
             confDat['session']['projpath']
     termWidth, _ = click.get_terminal_size()
@@ -91,127 +142,11 @@ def list(ctxObjs):
 
         colAlt = not colAlt
 
-
-@cli.command(help=\
-        'Get currently active project, or activate a project')
-@click.pass_obj
-@click.option('-pn', '--projname', default=None)
-def active(ctxObjs, projname):
-    if projname:
-        if projname in ctxObjs['confObj'].confDat['session']['projpath']:
-            ctxObjs['confObj'].makeActive(projname)
-        else:
-            raise click.ClickException('No project by that name')
-    else:
-        ctxObjs['confObj'].printActive()
-
-@cli.command(help=\
-        'Remove a project and delete the containing folder')
-@click.pass_obj
-@click.argument('projname')
-def remove(ctxObjs, projname):
-    projnamefull = projname
-    projname = projname.split('.')
-    childList=[]
-    if not projnamefull in ctxObjs['confObj'].\
-            confDat['session']['projpath']:
-        raise click.ClickException('No project by that name')
-
-    if len(projname)>1:
-        if click.confirm('Are you sure you want to'+\
-                ' delete this subproject', abort=True):
-
-            projDir = os.path.join(ctxObjs['confObj'].\
-                confDat['session']['projpath'][\
-                projnamefull], projname[0], projname[-1]+'.yaml')
-            os.remove(projDir)
-            parObj = projObj.projObj(ctxObjs['confObj'],\
-                    projname[0], None)
-            parObj.readProj()
-            parObj.projDat['children'].remove(projname[-1])
-            parObj.writeProj()
-
-    elif click.confirm('Are you sure you want to'+\
-            ' delete this project, its folder,'+\
-            ' and contents?', abort=True):
-        
-        parObj = projObj.projObj(ctxObjs['confObj'],\
-                projnamefull, None)
-        parObj.readProj()
-        childList = parObj.projDat['children']
-        projDir = os.path.join(ctxObjs['confObj'].\
-            confDat['session']['projpath'][\
-            projnamefull], projnamefull)
-        shutil.rmtree(projDir)
-
-        if childList:
-            for i in childList:
-                del ctxObjs['confObj'].confDat['session'\
-                        ]['projpath']['.'.join([projnamefull,i])]
-
-    del ctxObjs['confObj'].\
-        confDat['session']['projpath'][\
-        projnamefull]
-
-    if ctxObjs['confObj'].confDat['session']['active']==projnamefull:
-        ctxObjs['confObj'].makeActive()
-
-    ctxObjs['confObj'].writeConf()
-
-@cli.command(help='Delete a task')
-@click.pass_obj
-@click.argument('taskname', required=True)
-@click.option('-pn', '--projname', default=None,\
-        help='Name of the project to delete the task from')
-def delete(ctxObjs,taskname,projname):
-    if not projname:
-        if ctxObjs['confObj'].\
-                confDat['session']['active']:
-            projname = ctxObjs['confObj'].\
-                    confDat['session']['active']
-        else:
-            projname = click.prompt(\
-                    'Enter a project to delete the task from')
-
-    
-    ctxObjs['projObj'] = projObj.\
-            projObj(ctxObjs['confObj'],projname, None)
-    ctxObjs['projObj'].readProj()
-    ctxObjs['projObj'].deleteTask(taskname)
-
-@cli.command(help='Reset active project')
-@click.pass_obj
-def reset(ctxObjs):
-    ctxObjs['confObj'].makeActive()
-
-@cli.command(help='Create a new task')
-@click.pass_obj
-@click.argument('taskname', required=True)
-@click.option('-pn', '--projname', default=None,\
-        help='Name of the project to add the task to')
-@click.option('-ta', '--assignee', default=None, help=\
-        'Team member the task is assigned to')
-def task(ctxObjs,taskname,projname, assignee):
-    if not projname:
-        if ctxObjs['confObj'].\
-                confDat['session']['active']:
-            projname = ctxObjs['confObj'].\
-                    confDat['session']['active']
-        else:
-            projname = click.prompt(\
-                    'Enter a project to add the task to')
-
-    ctxObjs['projObj'] = projObj.\
-            projObj(ctxObjs['confObj'],projname, None)
-    ctxObjs['projObj'].readProj()
-    ctxObjs['projObj'].newTask(taskname, assignee)
-    ctxObjs['confObj'].makeActive(projname)
-
-@cli.command(help='List tasks in active project')
+@list.command(help='List tasks in active project')
 @click.pass_obj
 @click.option('-pn', '--projname', default=None,\
         help='Name of project to get tasks from')
-def current(ctxObjs,projname):
+def task(ctxObjs,projname):
     if not projname:
         if ctxObjs['confObj'].\
                 confDat['session']['active']:
@@ -290,6 +225,116 @@ def current(ctxObjs,projname):
 
         colAlt = not colAlt
 
+@cli.group()
+@click.pass_context
+def delete(ctx):
+    pass
+
+@delete.command(help=\
+        'Remove a project and delete the containing folder')
+@click.pass_obj
+@click.argument('projname')
+def proj(ctxObjs, projname):
+    projnamefull = projname
+    projname = projname.split('.')
+    childList=[]
+    if not projnamefull in ctxObjs['confObj'].\
+            confDat['session']['projpath']:
+        raise click.ClickException('No project by that name')
+
+    if len(projname)>1:
+        if click.confirm('Are you sure you want to'+\
+                ' delete this subproject', abort=True):
+
+            projDir = os.path.join(ctxObjs['confObj'].\
+                confDat['session']['projpath'][\
+                projnamefull], projname[0], projname[-1]+'.yaml')
+            os.remove(projDir)
+            parObj = projObj.projObj(ctxObjs['confObj'],\
+                    projname[0], None)
+            parObj.readProj()
+            parObj.projDat['children'].remove(projname[-1])
+            parObj.writeProj()
+
+    elif click.confirm('Are you sure you want to'+\
+            ' delete this project, its folder,'+\
+            ' and contents?', abort=True):
+        
+        parObj = projObj.projObj(ctxObjs['confObj'],\
+                projnamefull, None)
+        parObj.readProj()
+        childList = parObj.projDat['children']
+        projDir = os.path.join(ctxObjs['confObj'].\
+            confDat['session']['projpath'][\
+            projnamefull], projnamefull)
+        shutil.rmtree(projDir)
+
+        if childList:
+            for i in childList:
+                del ctxObjs['confObj'].confDat['session'\
+                        ]['projpath']['.'.join([projnamefull,i])]
+
+    del ctxObjs['confObj'].\
+        confDat['session']['projpath'][\
+        projnamefull]
+
+    if ctxObjs['confObj'].confDat['session']['active']==projnamefull:
+        ctxObjs['confObj'].makeActive()
+
+    ctxObjs['confObj'].writeConf()
+
+@delete.command(help='Delete a task')
+@click.pass_obj
+@click.argument('taskname', required=True)
+@click.option('-pn', '--projname', default=None,\
+        help='Name of the project to delete the task from')
+def task(ctxObjs,taskname,projname):
+    if not projname:
+        if ctxObjs['confObj'].\
+                confDat['session']['active']:
+            projname = ctxObjs['confObj'].\
+                    confDat['session']['active']
+        else:
+            projname = click.prompt(\
+                    'Enter a project to delete the task from')
+
+    
+    ctxObjs['projObj'] = projObj.\
+            projObj(ctxObjs['confObj'],projname, None)
+    ctxObjs['projObj'].readProj()
+    ctxObjs['projObj'].deleteTask(taskname)
+
+@cli.group()
+@click.pass_context
+def copy(ctx):
+    pass
+
+@copy.command(help='Create a copy project. Also can be used to make a project parent-less or make it a child of another project')
+@click.pass_obj
+@click.argument('projname')
+@click.option('-pn', '--newprojname', default=None,\
+        help='Name of the new holding the task')
+@click.option('--delete', 'deleteold', flag_value=True, default=True,\
+        help='Delete the source project')
+@click.option('--keep', 'deleteold', flag_value=False,\
+        help='Keep the source project')
+def proj(ctxObjs, projname, newprojname, deleteold):
+    pass
+
+@copy.command(help='Create a duplicate task. Also used to make a task parent-less or a child of another one')
+@click.pass_obj
+@click.argument('taskname')
+@click.option('-pn', '--projname', default=None,\
+        help='Name of the project holding the task')
+@click.option('-tn', '--newtaskname', default=None,\
+        help='Name of the new task')
+@click.option('--delete', 'deleteold', flag_value=True, default=True,\
+        help='Delete the source task')
+@click.option('--keep', 'deleteold', flag_value=False,\
+        help='Keep the source task')
+def task(ctxObjs, taskname, projname, newtaskname, deleteold):
+    pass
+
 @cli.command(help='Start tracking time for task')
 @click.pass_obj
 @click.argument('taskname', required=True)
@@ -350,7 +395,6 @@ def finish(ctxObjs, projname, taskname):
     ctxObjs['projObj'].readProj()
     ctxObjs['projObj'].finishTask(taskname, ctxObjs['confObj'])
 
-
 @cli.command(help='Promote a task/subtask to project/subproject')
 @click.pass_obj
 @click.argument('taskname')
@@ -371,73 +415,26 @@ def promote(ctxObjs, taskname, projname, parentproj):
 def demote(ctxObjs, projname, taskname, parenttask):
     pass
 
-
-@cli.command(help='Create a copy project. Also can be used to make a project parent-less or make it a child of another project')
-@click.pass_obj
-@click.argument('projname')
-@click.option('-pn', '--newprojname', default=None,\
-        help='Name of the new holding the task')
-@click.option('--delete', 'deleteold', flag_value=True, default=True,\
-        help='Delete the source project')
-@click.option('--keep', 'deleteold', flag_value=False,\
-        help='Keep the source project')
-def copy(ctxObjs, projname, newprojname, deleteold):
+@cli.group()
+@click.pass_context
+def show(ctx):
     pass
 
-@cli.command(help='Create a duplicate task. Also used to make a task parent-less or a child of another one')
-@click.pass_obj
-@click.argument('taskname')
-@click.option('-pn', '--projname', default=None,\
-        help='Name of the project holding the task')
-@click.option('-tn', '--newtaskname', default=None,\
-        help='Name of the new task')
-@click.option('--delete', 'deleteold', flag_value=True, default=True,\
-        help='Delete the source task')
-@click.option('--keep', 'deleteold', flag_value=False,\
-        help='Keep the source task')
-def duplicate(ctxObjs, taskname, projname, newtaskname, deleteold):
-    pass
-
-@cli.group(help=\
+@show.command(help=\
         'Show a gantt chart with current progress')
 @click.pass_obj
 def gantt(confObj):
     pass
 
-@cli.group(help=\
+@show.command(help=\
         'Show a kanban representation of current tasks')
 @click.pass_obj
 def kanban(confObj):
     pass
 
-@cli.group(help='Show a burndown chart for the defined time')
+@show.command(help='Show a burndown chart for the defined time')
 @click.pass_obj
 def burndown(confObj):
-    pass
-
-@cli.group(help='Produce a report in selected format')
-@click.pass_obj
-def publish(confObj):
-    pass
-
-@cli.group(help='Show status of project')
-@click.pass_obj
-def status(confObj):
-    pass
-
-@cli.group(help='show a summary for the past week')
-@click.pass_obj
-def week(confObj):
-    pass
-
-@cli.group(help='Show a summary for the past day')
-@click.pass_obj
-def day(confObj):
-    pass
-
-@cli.group(help='Show a summary of the past month')
-@click.pass_obj
-def month(confObj):
     pass
 
 if __name__ == '__main__':

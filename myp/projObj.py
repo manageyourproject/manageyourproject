@@ -46,7 +46,7 @@ class projObj:
             'team':{},
             'completion':'',
             'tasks':{},
-            'notes':{},
+            'notes':[],
             'progress':{},
             'milestones':{},
             'assets':{},
@@ -72,6 +72,10 @@ class projObj:
             'assignee':{},
             'assetsused':{},
             'deadline':'',
+            'recurs':{
+                'rate':0,
+                'frame':'day'
+                    },
             'timeinfo':{
                 'optimisticComp':'',
                 'probableComp':'',
@@ -100,12 +104,6 @@ class projObj:
         return os.path.isfile(self.projFile)
 
     def newProj(self, confObj):
-        if self.projExists():
-            if click.confirm('Project already Exists.' +
-                    '\nWould you like to overwrte it?',
-                    abort=True):
-                shutil.rmtree(self.projPath)
-                os.makedirs(self.projPath)
 
         if len(self.names) > 1:
             parObj = projObj(confObj, self.names[0], None)
