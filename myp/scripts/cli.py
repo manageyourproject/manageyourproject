@@ -249,53 +249,9 @@ def delete(ctx):
 @click.pass_obj
 @click.argument('projname')
 def proj(ctxObjs, projname):
-    projnamefull = projname
-    projname = projname.split('.')
-    childList=[]
-    if not projnamefull in ctxObjs['confObj'].\
-            confDat['session']['projs']:
-        raise click.ClickException('No project by that name')
-
-    if len(projname)>1:
-        if click.confirm('Are you sure you want to'+\
-                ' delete this subproject', abort=True):
-
-            projDir = os.path.join(ctxObjs['confObj'].\
-                confDat['session']['projs'][\
-                projnamefull], projname[0], projname[-1]+'.yaml')
-            os.remove(projDir)
-            parObj = projObj.projObj(ctxObjs['confObj'],\
-                    projname[0], None)
-            parObj.readProj()
-            parObj.projDat['children'].remove(projname[-1])
-            parObj.writeProj()
-
-    elif click.confirm('Are you sure you want to'+\
-            ' delete this project, its folder,'+\
-            ' and contents?', abort=True):
-        
-        parObj = projObj.projObj(ctxObjs['confObj'],\
-                projnamefull, None)
-        parObj.readProj()
-        childList = parObj.projDat['children']
-        projDir = os.path.join(ctxObjs['confObj'].\
-            confDat['session']['projs'][\
-            projnamefull], projnamefull)
-        shutil.rmtree(projDir)
-
-        if childList:
-            for i in childList:
-                del ctxObjs['confObj'].confDat['session'\
-                        ]['projs']['.'.join([projnamefull,i])]
-
-    del ctxObjs['confObj'].\
-        confDat['session']['projs'][\
-        projnamefull]
-
-    if ctxObjs['confObj'].confDat['session']['active']==projnamefull:
-        ctxObjs['confObj'].makeActive()
-
-    ctxObjs['confObj'].writeConf()
+    output = main.deleteProj(ctxObjs['confObj'], projname)
+    if isinstance(output, str):
+        raise click.ClickException(output)
 
 @delete.command(help='Delete a task')
 @click.pass_obj

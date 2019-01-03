@@ -59,7 +59,7 @@ def writeConf(confObj):
     confDat, confLoc = confObj.dumpDat()
     datIO.yamlWrite(confDat, confLoc)
 
-def newProj(confObj, projName, storeType, storeLoc, overwrite):
+def makeProj(confObj, projName, storeType, storeLoc, overwrite):
     check = projCheck(confObj, projName)
     if isinstance(check, str) and not check == this.projValid[2]:
         return check
@@ -85,27 +85,111 @@ def newProj(confObj, projName, storeType, storeLoc, overwrite):
         if check == this.projValid[2] and click.confirm(\
                 'Parent project doesn\'t exists.\n'+\
                 'Would you like to create it?', abort=True):
-            newProj(confObj, names[0], storeType, storeLoc)
+            parProj = makeProj(confObj, names[0], storeType, storeLoc)
+            writeProj(parProj)
+            confObj.trackProj(projName, storeType, storeLoc)
+            writeConf(conf)
         else:
             return check
 
+    if storeType == 'yaml':
+        storeLoc = os.path.join(storeLoc, names[0])
+        projFile = os.path.join(storeLoc, names[-1]+'.yaml')
+        if not os.path.exists(storeLoc):
+            os.makedirs(storeLoc)
+    else:
+        return 'Can\'t load that store type'
+
     confObj.trackProj(projName, storeType, storeLoc)
-
-    self.projPath = os.path.\
-        join(self.projDir,self.names[0])
-    self.projFile = os.path.\
-            join(self.projPath,\
-            self.names[-1]+'.yaml')
-
-def deleteProj():
-    pass
-
-def loadProjDat(confObj, ):
+    createdProj = projObj.projObj(projFile, projName)
+    createdProj.newProj(confObj, names[0], storeType, storeLoc)
     
-    pass
+    if names>1:
+        createdProj.giveParent(names[0])
+        parProj = loadProj(confObj, names[0])
+        if isinstance(parProj, str):
+            return parProj
+        else:
+            parProj.giveChild(names[-1])
+            writeProj(parProj)
 
-def writeProjDat():
-    pass
+    writeProj(createdProj)
+    writeConf(conf)
+
+def deleteProj(confObj, projName):
+    check = projCheck(confObj, projName)
+    if isinstance(check, str) and not check == this.projValid[3]:
+        return check
+
+    storeType = confObj.confDat['session']['projs'][projName]['storeType']
+    storeLoc = confObj.confDat['session']['projs'][projName]['storeLoc']
+    names = projName.split('.')
+    if storeType == 'yaml':
+        storeLoc = os.path.join(storeLoc, names[0])
+        projFile = os.path.join(storeLoc, names[-1]+'.yaml')
+    else:
+        return 'Can\'t load that store type'
+
+    childList=[]
+    if len(projname)>1:
+        if click.confirm('Are you sure you want to'+\
+                ' delete this subproject', abort=True):
+
+            os.remove(projFile)
+            parProj = projObj.projObj(confObj, names[0])
+            parProj = loadProj(confObj, names[0])
+            if isinstance(parProj, str):
+                return parProj
+            else:
+                parProj.projDat['children'].remove(projname[-1])
+                writeProj(parProj)
+
+    elif click.confirm('Are you sure you want to'+\
+            ' delete this project, its folder,'+\
+            ' and contents?', abort=True):
+        
+        parProj = projObj.projObj(confObj, names[0])
+        parProj = loadProj(confObj, names[0])
+        if isinstance(parProj, str):
+            return parProj
+        else:
+            childList = parProj.projDat['children']
+            shutil.rmtree(storeLoc)
+
+        if childList:
+            for i in childList:
+                del confObj.confDat['session']['projs']['.'.join([projName,i])]
+
+    del confObj.confDat['session']['projs'][projName]
+
+    if confObj.confDat['session']['active']==projName:
+        makeActive(confObj)
+
+    writeConf(confObj)
+
+
+def loadProjDat(confObj, projName):
+    check = projCheck(confObj, projName)
+    if isinstance(check, str) and not check == this.projValid[3]:
+        return check
+
+    storeType = confObj.confDat['session']['projs'][projName]['storeType']
+    storeLoc = confObj.confDat['session']['projs'][projName]['storeLoc']
+    names = projName.split('.')
+    if storeType == 'yaml':
+        storeLoc = os.path.join(storeLoc, names[0])
+        projFile = os.path.join(storeLoc, names[-1]+'.yaml')
+    else:
+        return 'Can\'t load that store type'
+
+    loadedProj = projObj.projObj(projName,projFile)
+    loadedProj.loadDat(datIO.yamlRead(projFile))
+    
+    return loadedProj
+
+def writeProj(projObj):
+    projDat, projFile = projObj.dumpDat()
+    datIO.yamlWrite(projDat, projFile)
 
 def projCheck(confObj, projName):
     names = projName.split('.')
