@@ -54,7 +54,7 @@ class confObj:
     def dumpDat(self):
         return [self.confDat, self.cfgFile]
 
-    def trackProj(projName, storeType, storeLoc):
+    def trackProj(self, projName, storeType, storeLoc):
         self.confDat['session']['projs'][projName]={
                 'storeType':storeType,
                 'storeLoc':storeLoc,

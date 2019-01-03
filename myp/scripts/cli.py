@@ -72,7 +72,7 @@ def new(ctx):
 @click.option('-f', '--force', is_flag=True,\
         help='Location of the store for the project')
 def proj(ctxObjs, projname, storetype, storeloc, force):
-    output = main.newProj(ctxObjs['confObj'], projname, storetype, storeloc, force)
+    output = main.makeProj(ctxObjs['confObj'], projname, storetype, storeloc, force)
     if isinstance(output, str):
         raise click.ClickException(output)
     
@@ -134,8 +134,7 @@ def proj(ctxObjs):
     colAlt = not colAlt
     for keys, value in sorted(projs.items()):
         listVals = ''
-        proj = projObj.projObj(ctxObjs['confObj'],keys, None)
-        proj.readProj()
+        proj = main.loadProj(ctxObjs['confObj'],keys)
         for i, j in ctxObjs['confObj'].confDat[\
                 'session']['listformat'].items():
             
@@ -144,7 +143,8 @@ def proj(ctxObjs):
                 field = dt.datetime.fromisoformat(field).\
                         strftime('%Y/%m/%d')
 
-            if j == 'name' and proj.projDat['parent']:
+            if j == 'name' and 'parent' in proj.projDat:
+                field = field.split('.')[-1]
                 listVals = listVals + '|   ' + '{i:<{width}}'.format(\
                         i=field, width=cellWidth-2)
             else:

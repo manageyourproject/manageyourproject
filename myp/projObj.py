@@ -50,3 +50,12 @@ class projObj:
     def loadProj(self, dat):
         self.projDat = dat
 
+    def giveParent(self, parName):
+        self.projDat['parent'] = parName
+        if 'children' in self.projDat:
+            del self.projDat['children']
+
+    def giveChild(self, childName):
+        self.projDat['children'].append(childName)
+        if 'parent' in self.projDat:
+            del self.projDat['parent']
