@@ -40,6 +40,10 @@ def makeConf(cfg, name, email):
     writeConf(conf)
     return conf
 
+def writeConf(confObj):
+    confDat, confLoc = confObj.dumpDat()
+    datIO.yamlWrite(confDat, confLoc)
+
 def makeActive(confObj, projname=None):                # mark a project as active
     if projname:
         check = projCheck(confObj, projname)
@@ -55,14 +59,11 @@ def getActive(confObj):                              # print the active project
     else:
         return 'There are no currently active projects'
 
-def writeConf(confObj):
-    confDat, confLoc = confObj.dumpDat()
-    datIO.yamlWrite(confDat, confLoc)
-
 def makeProj(confObj, projName, storeType, storeLoc, overwrite):
     names=projName.split('.')
     check = projCheck(confObj, projName)
-    if isinstance(check, str) and not check == this.projValid[2]:
+    if isinstance(check, str) and (check == this.projValid[0] or\
+                                   check == this.projValid[1]):
         return check
     
     elif check == this.projValid[3]:
@@ -107,6 +108,25 @@ def makeProj(confObj, projName, storeType, storeLoc, overwrite):
     writeProj(createdProj)
     writeConf(confObj)
 
+def writeProj(projObj):
+    projDat, projFile = projObj.dumpProj()
+    datIO.yamlWrite(projDat, projFile)
+
+def loadProj(confObj, projName, storeType=None, storeLoc=None):
+    check = projCheck(confObj, projName)
+    if isinstance(check, str) and not check == this.projValid[3]:
+        return check
+
+    check = projStoreCheck(confObj, projName, storeType, storeLoc)
+    if isinstance(check, list):
+        storeType = check[0]
+        storeLoc = check[1]
+        projFile = check[2]
+
+    loadedProj = projObj.projObj(projName,projFile)
+    loadedProj.loadProj(datIO.yamlRead(projFile))
+    return loadedProj
+
 def deleteProj(confObj, projName, storeType=None, storeLoc=None):
     names=projName.split('.')
     check = projCheck(confObj, projName)
@@ -149,29 +169,27 @@ def deleteProj(confObj, projName, storeType=None, storeLoc=None):
 
     writeConf(confObj)
 
-
-def loadProj(confObj, projName, storeType=None, storeLoc=None):
-    check = projCheck(confObj, projName)
-    if isinstance(check, str) and not check == this.projValid[3]:
-        return check
-
-    check = projStoreCheck(confObj, projName, storeType, storeLoc)
-    if isinstance(check, list):
-        storeType = check[0]
-        storeLoc = check[1]
-        projFile = check[2]
-
-    loadedProj = projObj.projObj(projName,projFile)
-    loadedProj.loadProj(datIO.yamlRead(projFile))
-    return loadedProj
-
-def writeProj(projObj):
-    projDat, projFile = projObj.dumpProj()
-    datIO.yamlWrite(projDat, projFile)
+def projCheck(confObj, projName, storeType=None, storeLoc=None):
+    names=projName.split('.')
+    if len(names) > 1:
+        if len(names) > 2:
+            return this.projValid[0]
+        elif names[0]==names[-1]:
+            return this.projValid[1]
+    elif not projName in confObj.confDat['session']['projs']:
+        return this.projValid[2]
+    else:
+        return this.projValid[3]
 
 def projStoreCheck(confObj, projName, storeType=None, storeLoc=None):
     names=projName.split('.')
-    if not storeType:
+    if projName in confObj.confDat['session']['projs']:
+        storeType = confObj.confDat['session']['projs'][projName]['storeType']
+        storeLoc = confObj.confDat['session']['projs'][projName]['storeLoc']
+        projFile = os.path.join(storeLoc, names[-1]+'.yaml')
+        return [storeType, storeLoc, projFile]
+
+    elif not storeType:
         storeType = confObj.confDat['session']['defaultstoretype']
 
     if storeType == 'yaml':
@@ -184,19 +202,59 @@ def projStoreCheck(confObj, projName, storeType=None, storeLoc=None):
         if not os.path.exists(storeLoc):
             os.makedirs(storeLoc)
 
+    if storeType == 'yaml':
         return [storeType, storeLoc, projFile]
-
     else:
         return 'Can\'t load that store type'
 
-def projCheck(confObj, projName, storeType=None, storeLoc=None):
-    names=projName.split('.')
+def makeTask(projObj, taskName, assignee):
+    names = taskName.split('.')
+    check = taskCheck(projObj, taskName)
+    if isinstance(check, str) and (check==this.taskValid[0] or\
+                                   check==this.taskValid[0]):
+        return check
+    elif isinstance(check, str) and check==this.taskValid[3]:
+        if projObj.projDat['tasks'][taskName[-1]]['status'] == 'finished':
+            if click.confirm('A finished task by that name already exists\n'+\
+                    'would you like to restart it?', abort=True):
+                projObj.projDat['tasks'][taskName[-1]]['status'] = 'in-progress'
+        else:
+            return check
+    else:
+        if len(names) > 1:
+            if not names[0] in projObj.projDat['tasks']:
+                if click.confirm('Parent task doesn\'t exists.\n'+\
+                        'Would you like to create it?', abort=True):
+                    makeTask(projObj, names[0], assignee)
+
+        if not assignee:
+            assignee, assigneeDeet = list(projObj.projDat['team'].items())[0]
+        elif assignee in projObj.projDat['team']:
+            assigneeDeet=projObj.projDat['team'][assignee]
+        else:
+            return 'That name isn\'t in the team list'
+        
+        newTask = taskObj.taskObj(taskName)
+        newTask.newTask(assignee)
+        newTask.taskDat['assignee'][assignee]=dict(assigneeDeet)
+        if len(taskName) > 1:
+            projObj.projDat['tasks'][taskName]['parent'] = taskName[0]
+            projObj.projDat['tasks'][names[0]]['children'].append(taskName[-1])
+
+        projObj.projDat['tasks'][taskName] = newTask.dumpTask()
+        writeProj(projObj)
+
+def taskCheck(projObj, taskName):
+    names=taskName.split('.')
     if len(names) > 1:
         if len(names) > 2:
-            return this.projValid[0]
+            return this.taskValid[0]
         elif names[0]==names[-1]:
-            return this.projValid[1]
-    elif not projName in confObj.confDat['session']['projs']:
-        return this.projValid[2]
+            return this.taskValid[1]
+    elif not projName in projObj.projDat['tasks']:
+        return this.taskValid[2]
     else:
-        return this.projValid[3]
+        return this.taskValid[3]
+
+def taskStatus(projObj, taskName):
+    pass

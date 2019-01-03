@@ -85,19 +85,21 @@ def proj(ctxObjs, projname, storetype, storeloc, force):
         'Team member the task is assigned to')
 def task(ctxObjs,taskname,projname, assignee):
     if not projname:
-        if ctxObjs['confObj'].\
-                confDat['session']['active']:
-            projname = ctxObjs['confObj'].\
-                    confDat['session']['active']
-        else:
-            projname = click.prompt(\
-                    'Enter a project to add the task to')
+        projname = main.getActive(ctxObjs['confObj'])
+        if not projname:
+            projname = click.prompt('Enter a project to add the task to')
 
-    ctxObjs['projObj'] = projObj.\
-            projObj(ctxObjs['confObj'],projname, None)
-    ctxObjs['projObj'].readProj()
-    ctxObjs['projObj'].newTask(taskname, assignee)
-    ctxObjs['confObj'].makeActive(projname)
+    proj = main.loadProj(ctxObjs['confObj'],projname)
+    if isinstance(proj, str):
+        raise click.ClickException(proj)
+
+    output = main.makeTask(proj, taskname, assignee)
+    if isinstance(output, str):
+        raise click.ClickException(output)
+
+    active = main.makeActive(ctxObjs['confObj'], projname)
+    if isinstance(active, str):
+        raise click.ClickException(active)
 
 @cli.group()
 @click.pass_context
@@ -135,6 +137,9 @@ def proj(ctxObjs):
     for keys, value in sorted(projs.items()):
         listVals = ''
         proj = main.loadProj(ctxObjs['confObj'],keys)
+        if isinstance(proj, str):
+            raise click.ClickException(proj)
+
         for i, j in ctxObjs['confObj'].confDat[\
                 'session']['listformat'].items():
             
@@ -162,26 +167,24 @@ def proj(ctxObjs):
         help='Name of project to get tasks from')
 def task(ctxObjs,projname):
     if not projname:
-        if ctxObjs['confObj'].\
-                confDat['session']['active']:
-            projname = ctxObjs['confObj'].\
-                    confDat['session']['active']
-        else:
-            projname = click.prompt(\
-                    'Enter a project to view its tasks')
+        projname = main.getActive(ctxObjs['confObj'])
+        if not projname:
+            projname = click.prompt('Enter a project to view its tasks')
+
+    proj = main.loadProj(ctxObjs['confObj'],projname)
+    if isinstance(proj, str):
+        raise click.ClickException(proj)
+
+    active = main.makeActive(ctxObjs['confObj'], projname)
+    if isinstance(active, str):
+        raise click.ClickException(active)
 
     colAlt = False
     termWidth, _ = click.get_terminal_size()
-    ctxObjs['projObj'] = projObj.projObj(\
-            ctxObjs['confObj'],projname, None)
-    ctxObjs['projObj'].readProj()
-    ctxObjs['confObj'].makeActive(projname)
-    cellWidth=int(math.floor(termWidth/\
-            len(ctxObjs['projObj'].projDat[\
-            'currentformat']))-2)
+    cellWidth=int(math.floor(termWidth/len(proj.projDat['currentformat']))-2)
     listDict={}
     listHead = ''
-    for i in ctxObjs['projObj'].projDat['currentformat']:
+    for i in proj.projDat['currentformat']:
         listHead = listHead + '| ' + '{i:<{width}}'.format(\
                 i=i, width=cellWidth)
 
@@ -194,10 +197,10 @@ def task(ctxObjs,projname):
             '{:{width}}'.format('-'*termWidth,\
             width=termWidth),bold=True, reverse=colAlt))
     colAlt = not colAlt
-    for key, value in ctxObjs['projObj'].projDat['tasks'].items():
+    for key, value in proj.projDat['tasks'].items():
         listVals = ''
         if not value['status'] == 'finished':
-            for i, j in ctxObjs['projObj'].\
+            for i, j in proj.\
                     projDat['currentformat'].items():
                 listVals = listVals+'| '
                 if j == 'name':
@@ -269,10 +272,10 @@ def task(ctxObjs,taskname,projname):
                     'Enter a project to delete the task from')
 
     
-    ctxObjs['projObj'] = projObj.\
+    proj = projObj.\
             projObj(ctxObjs['confObj'],projname, None)
-    ctxObjs['projObj'].readProj()
-    ctxObjs['projObj'].deleteTask(taskname)
+    proj.readProj()
+    proj.deleteTask(taskname)
 
 @cli.group()
 @click.pass_context

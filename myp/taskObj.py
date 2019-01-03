@@ -3,11 +3,13 @@ import shutil
 import datetime
 
 class taskObj:
-    def __init__(self):
-        self.names=projName.split('.')
+    def __init__(self, taskName, taskDat={}):
+        self.taskDat = taskDat
+        self.name=taskName
 
     def defaultTask(self):
         defaultTask = {
+            'name':''
             'parent':None,
             'children':[],
             'dependency':[],
@@ -33,52 +35,12 @@ class taskObj:
             }
         return defaultTask
 
-    def taskExists(self, taskName):
-        if len(taskName) > 1 and taskName[0]==taskName[-1]:
-            raise click.ClickException(\
-                    'Can\'t have identically'+\
-                    ' named task and subtask')
-
-        return taskName[-1] in self.projDat['tasks']
-
-    def newTask(self, taskName, assignee):
-        taskName=taskName.split('.')
-
-        if self.taskExists(taskName):
-            if self.projDat['tasks'][taskName[-1]]['status'] == 'finished':
-                if click.confirm('A finished task by that name already exists\n'+\
-                        'would you like to restart it?', abort=True):
-                    self.projDat['tasks'][taskName[-1]]['status'] = 'in-progress'
-            else:
-                raise click.ClickException('A task by that name already exists')
-        else:
-            if len(taskName) > 1:
-                if not taskName[0] in self.projDat['tasks']:
-                    if click.confirm('Parent task doesn\'t exists.\n'+\
-                            'Would you like to create it?', abort=True):
-                        self.newTask(taskName[0], assignee)
-
-            self.projDat['tasks'][taskName[-1]] = self.defaultTask()
-            self.projDat['tasks'][taskName[-1]]['datecreated']=\
-                    datetime.datetime.now(datetime.timezone.utc\
-                    ).isoformat(),
-
-            if not assignee:
-                assignee, assigneeDeet = list(self.projDat['team'].items())[0]
-            elif assignee in self.projDat['team']:
-                assigneeDeet=self.projDat['team'][assignee]
-            else:
-                raise click.ClickException('That name isn\'t in the team list')
-
-            self.projDat['tasks'][taskName[-1]]['assignee'][assignee]=dict(assigneeDeet)
-            
-            if len(taskName) > 1:
-                self.projDat['tasks'][taskName[-1]\
-                        ]['parent'] = taskName[0]
-                self.projDat['tasks'][taskName[0]\
-                        ]['children'].append(taskName[-1])
-
-            self.writeProj()
+    def newTask(self, assignee):
+        self.taskDat = self.defaultTask()
+        self.taskDat['name']=self.name
+        self.taskDat['assignee'] = {assignee:{},}
+        self.taskDat['datecreated']=datetime.\
+            datetime.now(datetime.timezone.utc).isoformat()
 
     def startTask(self, taskName):
         taskName=taskName.split('.')

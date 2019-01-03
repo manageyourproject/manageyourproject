@@ -43,7 +43,6 @@ class confObj:
 
     def newConf(self, name, email):
         self.confDat = self.defaultConf()
-
         self.confDat['user']['name'] = name
         self.confDat['user']['email'] = email
         self.confDat['session']['defaultprojpath']=self.cfgProj
