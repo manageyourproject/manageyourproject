@@ -9,7 +9,7 @@ class taskObj:
 
     def defaultTask(self):
         defaultTask = {
-            'name':''
+            'name':'',
             'parent':None,
             'children':[],
             'dependency':[],
@@ -41,6 +41,9 @@ class taskObj:
         self.taskDat['assignee'] = {assignee:{},}
         self.taskDat['datecreated']=datetime.\
             datetime.now(datetime.timezone.utc).isoformat()
+
+    def dumpTask(self):
+        return self.taskDat
 
     def startTask(self, taskName):
         taskName=taskName.split('.')
@@ -115,26 +118,3 @@ class taskObj:
         self.projDat['tasks'][taskName[-1]]['status']='finished'
         self.writeProj()
 
-    def deleteTask(self, taskName):
-        taskName=taskName.split('.')
-        if not self.taskExists(taskName):
-            raise click.ClickException('No task by that name exists')
-        
-        if self.projDat['tasks'][taskName[-1]]['parent']:
-            if click.confirm('Are you sure you want to delete this subtask?',\
-                    abort=True):
-                parTask = self.projDat['tasks'][taskName[-1]]['parent']
-                self.projDat['tasks'][parTask]['children'].remove(taskName[-1])
-        elif self.projDat['tasks'][taskName[-1]]['children']:
-            if click.confirm('Are you sure you want to delete this task and subtasks?',\
-                    abort=True):
-                children = self.projDat['tasks'][taskName[-1]]['children']
-                for i in children:
-                    del self.projDat['tasks'][i]
-        else:
-            if click.confirm('Are you sure you want to delete this task?',\
-                    abort=True):
-                pass
-
-        del self.projDat['tasks'][taskName[-1]]
-        self.writeProj()

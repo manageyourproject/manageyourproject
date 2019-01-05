@@ -6,10 +6,10 @@ import os
 import datetime
 
 class projObj:
-    def __init__(self, projName, projFile):
+    def __init__(self, projName, projFile, projDat=None):
         self.projName = projName
         self.projFile = projFile
-        self.projDat=None
+        self.projDat = projDat
 
     def defaultProj(self):
         defaultProj = {
@@ -59,3 +59,4 @@ class projObj:
         self.projDat['children'].append(childName)
         if 'parent' in self.projDat:
             del self.projDat['parent']
+
