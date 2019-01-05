@@ -302,7 +302,7 @@ def loadTask(projObj, taskName):
                                    check==this.taskValid[2]):
         return check
     else:
-        return projObj.projDat['tasks'][taskName]
+        return taskName in projObj.projDat['tasks']
 
 def deleteTask(projObj, taskName):
     names = taskName.split('.')
@@ -409,18 +409,53 @@ def finishTask(projObj, taskName, confObj):
     projObj.projDat['tasks'][taskName]['status']='finished'
     writeProj(projObj)
 
-def promote(projName, taskParProj, taskName, confObj):
-    for key, value in proj.projDat['tasks'][taskName].items():
-        if (key in newProj.projDat\
-                and not key == 'parent'\
-                and not key == 'children'\
-                and not key == 'assignee'):
-            newProj.projDat[key]=value
+def promote(confObj, projName, taskParProj, taskName):
+    check = projCheck(confObj, taskParProj.projName, None, None)
+    if isinstance(check, str) and not check == this.projValid[3]:
+        return check
 
-def demote(projName, taskParProj, taskName, confObj):
-    for key, value in proj.projDat.items():
+    check = projStoreCheck(confObj, taskParProj.projName, None, None)
+    if isinstance(check, list):
+        storeType = check[0]
+        storeLoc = check[1]
+        projFile = check[2]
+    else:
+        return check
+    
+    output = makeProj(confObj, projName, storeType, storeLoc, None, None)
+    if isinstance(output, str):
+        return output
+
+    newProj = loadProj(confObj, projName)
+    if isinstance(output, str):
+        return newProj
+
+    for key, value in taskParProj.projDat['tasks'][taskName].items():
         if (key in newProj.projDat\
                 and not key == 'parent'\
                 and not key == 'children'\
-                and not key == 'assignee'):
-            newParProj.projDat['tasks'][taskName][key]=value
+                and not key == 'assignee'\
+                and not key == 'name'):
+            newProj.projDat[key]=value
+        if key == 'assignee':
+            for i, j in taskParProj.projDat['tasks'][taskName]['assignee'].items():
+                newProj.projDat['team'][i]=j
+
+    writeProj(newProj)
+
+def demote(confObj, proj, parentproj, taskname):
+    output = makeTask(parentproj, taskname, None, None)
+    if isinstance(output, str):
+        raise click.ClickException(output)
+
+    parentproj = loadProj(confObj, parentproj.projName)
+    if isinstance(parentproj, str):
+        return parentproj
+
+    for key, value in proj.projDat.items():
+        if (key in parentproj.projDat\
+                and not key == 'parent'\
+                and not key == 'children'\
+                and not key == 'assignee'\
+                and not key == 'name'):
+            parentproj.projDat['tasks'][taskname][key]=value
