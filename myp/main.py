@@ -3,7 +3,9 @@ import sys
 import math
 import click
 import shutil
-import datetime as dt
+import datetime
+
+from collections import OrderedDict
 
 from myp import confObj
 from myp import projObj
@@ -101,7 +103,7 @@ def makeProj(confObj, projName, storeType, storeLoc, overwrite, dat=None):
         createdProj = projObj.projObj(projName, projFile)
         createdProj.newProj(confObj)
     else:
-        createdProj = projObj.projObj(projName, projFile, dat)
+        createdProj = projObj.projObj(projName, projFile, dict(dat))
         createdProj.projDat['name'] = projName
     
     if len(names)>1:
@@ -160,7 +162,7 @@ def copyProj(confObj, projName, newProjName, deleteold):
         if isinstance(output, str):
             return output
 
-    output = makeProj(confObj, newProjName, storeType, storeLoc, None, proj.dumpProj[0])
+    output = makeProj(confObj, newProjName, storeType, storeLoc, None, proj.dumpProj()[0])
     if isinstance(output, str):
         return output
 
@@ -281,7 +283,7 @@ def makeTask(projObj, taskName, assignee, dat=None):
             newTask.newTask(assignee)
             newTask.taskDat['assignee'][assignee]=dict(assigneeDeet)
         elif dat:
-            newTask = taskObj.taskObj(taskName, dat)
+            newTask = taskObj.taskObj(taskName, dict(dat))
 
         projObj.projDat['tasks'][taskName] = newTask.dumpTask()
         if len(names) > 1:
@@ -294,7 +296,6 @@ def makeTaskFromDat(projObj, taskName, dat):
     pass
 
 def loadTask(projObj, taskName):
-    names = newTaskName.split('.')
     check = taskCheck(projObj, taskName)
     if isinstance(check, str) and (check==this.taskValid[0] or\
                                    check==this.taskValid[1] or\
@@ -403,7 +404,23 @@ def finishTask(projObj, taskName, confObj):
     if projObj.projDat['tasks'][taskName]['children']:
         for i in projObj.projDat['tasks'][taskName\
                 ]['children']:
-            projObj.finishTask(i, confObj)
+            finishTask(projObj, '.'.join([taskName,i]), confObj)
 
     projObj.projDat['tasks'][taskName]['status']='finished'
     writeProj(projObj)
+
+def promote(projName, taskParProj, taskName, confObj):
+    for key, value in proj.projDat['tasks'][taskName].items():
+        if (key in newProj.projDat\
+                and not key == 'parent'\
+                and not key == 'children'\
+                and not key == 'assignee'):
+            newProj.projDat[key]=value
+
+def demote(projName, taskParProj, taskName, confObj):
+    for key, value in proj.projDat.items():
+        if (key in newProj.projDat\
+                and not key == 'parent'\
+                and not key == 'children'\
+                and not key == 'assignee'):
+            newParProj.projDat['tasks'][taskName][key]=value

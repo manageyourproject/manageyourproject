@@ -311,7 +311,7 @@ def proj(ctxObjs, projname, newprojname, deleteold):
         help='Name of the new task', type=str)
 @click.option('--delete', 'deleteold', is_flag=True,\
         help='Delete the source task')
-def task(ctxObjs, taskname, projname, newtaskname, deleteold):
+def task(ctxObjs, taskname, newtaskname, projname, newtaskproj, deleteold):
     if not projname:
         projname = ctxObjs['confObj'].confDat['session']['active']
         if not projname:
@@ -322,7 +322,7 @@ def task(ctxObjs, taskname, projname, newtaskname, deleteold):
         raise click.ClickException(proj)
 
     task = main.loadTask(proj, taskname)
-    if isinstance(tasl, str):
+    if isinstance(task, str):
         raise click.ClickException(task)
 
     if not newtaskname:
@@ -347,10 +347,10 @@ def task(ctxObjs, taskname, projname, newtaskname, deleteold):
             raise click.ClickException(output)
 
 @cli.group()
-@click.pass_context
+@click.pass_obj
 @click.argument('taskname', required=True, type=str)
-@click.argument('projname', required=False, default=None, type=str)
-def task(ctx, taskname, projname):
+@click.option('-pn', '--projname', required=False, default=None, type=str)
+def task(ctxObjs, taskname, projname):
     if not projname:
         projname = ctxObjs['confObj'].confDat['session']['active']
         if not projname:
@@ -361,35 +361,76 @@ def task(ctx, taskname, projname):
         raise click.ClickException(proj)
 
     task = main.loadTask(proj, taskname)
-    if isinstance(tasl, str):
+    if isinstance(task, str):
         raise click.ClickException(task)
 
-    ctx['taskname']=taskname
-    ctx['projObj']=proj
+    ctxObjs['taskname']=taskname
+    ctxObjs['projObj']=proj
 
 @task.command(help='Start tracking time for task')
 @click.pass_obj
 def start(ctxObjs):
-    main.startTask(ctxObjs['projObj'],ctxObjs['taskname'])
+    output = main.startTask(ctxObjs['projObj'],ctxObjs['taskname'])
+    if isinstance(output, str):
+        raise click.ClickException(output)
 
 @task.command(help='Stop tracking time for task')
 @click.pass_obj
 def stop(ctxObjs):
-    main.stopTask(ctxObjs['projObj'],ctxObjs['taskname'],ctxObjs['confObj'])
+    output = main.stopTask(ctxObjs['projObj'],ctxObjs['taskname'],ctxObjs['confObj'])
+    if isinstance(output, str):
+        raise click.ClickException(output)
 
 @task.command(help='Stop tracking time for task')
 @click.pass_obj
 def finish(ctxObjs):
-    main.finishTask(ctxObjs['projObj'],ctxObjs['taskname'],ctxObjs['confObj'])
+    output = main.finishTask(ctxObjs['projObj'],ctxObjs['taskname'],ctxObjs['confObj'])
+    if isinstance(output, str):
+        raise click.ClickException(output)
 
 @cli.command(help='Promote a task/subtask to project/subproject')
 @click.pass_obj
 @click.argument('taskname', type=str)
-@click.option('-pp', '--parentproj', default=None,\
-        help='Name of parent project. (Promote to subproject)', type=str)
-@click.option('-pn', '--projname', default=None,\
-        help='Name of the project. If different from current name', type=str)
-def promote(ctxObjs, taskname, projname, parentproj):
+@click.argument('newprojname', required=False, default=None, type=str)
+@click.option('-pn', '--parentproj', default=None,\
+        help='Name of the project holding the task', type=str)
+@click.option('--delete', 'deleteold', is_flag=True,\
+        help='Delete the source task')
+def promote(ctxObjs, taskname, newprojname, parentprojname, deleteold):
+    if not parentprojname:
+        parentprojname = ctxObjs['confObj'].confDat['session']['active']
+        if not parentprojname:
+            parentprojname = click.prompt('Enter the name of the project holding the task')
+
+    parproj = main.loadProj(ctxObjs['confObj'],parentprojname)
+    if isinstance(parproj, str):
+        raise click.ClickException(parproj)
+
+    task = main.loadTask(parproj, taskname)
+    if isinstance(task, str):
+        raise click.ClickException(task)
+
+    if not newprojname:
+        names=taskname.split('.')
+        newprojname = names[-1]
+
+    if newtaskproj:
+        newproj = main.loadProj(ctxObjs['confObj'],newtaskproj)
+        if isinstance(newproj, str):
+            raise click.ClickException(proj)
+
+        output = main.makeTask(newproj, newtaskname, None, task)
+        if isinstance(output, str):
+            raise click.ClickException(output)
+    else:
+        output = main.makeTask(proj, newtaskname, None, task)
+        if isinstance(output, str):
+            raise click.ClickException(output)
+
+    if deleteold:
+        output = main.deleteTask(proj, taskname)
+        if isinstance(output, str):
+            raise click.ClickException(output)
     pass
 
 @cli.command(help='Demote a project/subproject to a task/subtask')
