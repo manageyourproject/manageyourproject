@@ -60,7 +60,7 @@ def getActive(confObj):                              # print the active project
     else:
         return 'There are no currently active projects'
 
-def makeProj(confObj, projName, storeType, storeLoc, overwrite):
+def makeProj(confObj, projName, storeType, storeLoc, overwrite, dat=None):
     names=projName.split('.')
     check = projCheck(confObj, projName)
     if isinstance(check, str) and (check == this.projValid[0] or\
@@ -68,8 +68,10 @@ def makeProj(confObj, projName, storeType, storeLoc, overwrite):
         return check
     
     elif check == this.projValid[3]:
-        if not overwrite and not click.confirm('Project already exists.\n'+\
+        if not overwrite and not dat and not click.confirm('Project already exists.\n'+\
                 'Would you like to overwrite it?'):
+            return check
+        elif dat and not overwrite:
             return check
         else:
             deleteProj(confObj, projName)
@@ -87,7 +89,7 @@ def makeProj(confObj, projName, storeType, storeLoc, overwrite):
         if check == this.projValid[2] and click.confirm(\
                 'Parent project doesn\'t exists.\n'+\
                 'Would you like to create it?', abort=True):
-            output = makeProj(confObj, names[0], storeType, storeLoc, overwrite)
+            output = makeProj(confObj, names[0], storeType, storeLoc, overwrite, None)
             if isinstance(output, str):
                 return output
 
@@ -95,8 +97,12 @@ def makeProj(confObj, projName, storeType, storeLoc, overwrite):
             return check
 
     confObj.trackProj(projName, storeType, storeLoc)
-    createdProj = projObj.projObj(projName, projFile)
-    createdProj.newProj(confObj)
+    if not dat:
+        createdProj = projObj.projObj(projName, projFile)
+        createdProj.newProj(confObj)
+    else:
+        createdProj = projObj.projObj(projName, projFile, dat)
+        createdProj.projDat['name'] = projName
     
     if len(names)>1:
         createdProj.giveParent(names[0])
@@ -106,9 +112,11 @@ def makeProj(confObj, projName, storeType, storeLoc, overwrite):
         else:
             parProj.giveChild(names[-1])
             writeProj(parProj)
-
     else:
-        del createdProj.projDat['parent']
+        if 'parent' in createdProj.projDat:
+            del createdProj.projDat['parent']
+        if not 'children' in createdProj.projDat:
+            createdProj.projDat['children'] = []
 
 
     writeProj(createdProj)
@@ -135,13 +143,6 @@ def loadProj(confObj, projName, storeType=None, storeLoc=None):
     return loadedProj
 
 def copyProj(confObj, projName, newProjName, deleteold):
-    names=newProjName.split('.')
-    check = projCheck(confObj, newProjName)
-    if isinstance(check, str) and (check == this.projValid[0] or\
-                                   check == this.projValid[1] or\
-                                   check == this.projValid[3]):
-        return 'New Project: '+check
-
     proj = loadProj(confObj,projName)
     if isinstance(proj, str):
         return proj
@@ -159,35 +160,9 @@ def copyProj(confObj, projName, newProjName, deleteold):
         if isinstance(output, str):
             return output
 
-    output = makeProj(confObj, newProjName, storeType, storeLoc, None)
+    output = makeProj(confObj, newProjName, storeType, storeLoc, None, proj.dumpProj[0])
     if isinstance(output, str):
         return output
-
-    check = projStoreCheck(confObj, newProjName, storeType, storeLoc)
-    if isinstance(check, list):
-        storeType = check[0]
-        storeLoc = check[1]
-        projFile = check[2]
-    else:
-        return check
-
-    newProj = projObj.projObj(newProjName, projFile, proj.projDat)
-    newProj.projDat['name'] = newProjName
-    if len(names)>1:
-        newProj.giveParent(names[0])
-        parProj = loadProj(confObj, names[0])
-        if isinstance(parProj, str):
-            return parProj
-        else:
-            parProj.giveChild(names[-1])
-            writeProj(parProj)
-    else:
-        if 'parent' in newProj.projDat:
-            del newProj.projDat['parent']
-        if not 'children' in newProj.projDat:
-            newProj.projDat['children'] = []
-
-    writeProj(newProj)
 
 def deleteProj(confObj, projName, storeType=None, storeLoc=None):
     names=projName.split('.')
@@ -272,7 +247,7 @@ def projStoreCheck(confObj, projName, storeType=None, storeLoc=None):
     else:
         return 'Can\'t load that store type'
 
-def makeTask(projObj, taskName, assignee):
+def makeTask(projObj, taskName, assignee, dat=None):
     names = taskName.split('.')
     check = taskCheck(projObj, taskName)
     if isinstance(check, str) and (check==this.taskValid[0] or\
@@ -280,9 +255,11 @@ def makeTask(projObj, taskName, assignee):
         return check
     elif isinstance(check, str) and check==this.taskValid[3]:
         if projObj.projDat['tasks'][taskName]['status'] == 'finished':
-            if click.confirm('A finished task by that name already exists\n'+\
+            if not dat and click.confirm('A finished task by that name already exists\n'+\
                     'would you like to restart it?', abort=True):
                 projObj.projDat['tasks'][taskName]['status'] = 'in-progress'
+            else:
+                return check
         else:
             return check
     else:
@@ -290,7 +267,7 @@ def makeTask(projObj, taskName, assignee):
             if not names[0] in projObj.projDat['tasks']:
                 if click.confirm('Parent task doesn\'t exists.\n'+\
                         'Would you like to create it?', abort=True):
-                    makeTask(projObj, names[0], assignee)
+                    makeTask(projObj, names[0], assignee, None)
 
         if not assignee:
             assignee, assigneeDeet = list(projObj.projDat['team'].items())[0]
@@ -299,15 +276,32 @@ def makeTask(projObj, taskName, assignee):
         else:
             return 'That name isn\'t in the team list'
         
-        newTask = taskObj.taskObj(taskName)
-        newTask.newTask(assignee)
-        newTask.taskDat['assignee'][assignee]=dict(assigneeDeet)
+        if not dat:
+            newTask = taskObj.taskObj(taskName)
+            newTask.newTask(assignee)
+            newTask.taskDat['assignee'][assignee]=dict(assigneeDeet)
+        elif dat:
+            newTask = taskObj.taskObj(taskName, dat)
+
         projObj.projDat['tasks'][taskName] = newTask.dumpTask()
         if len(names) > 1:
             projObj.projDat['tasks'][taskName]['parent'] = names[0]
             projObj.projDat['tasks'][names[0]]['children'].append(names[-1])
 
         writeProj(projObj)
+
+def makeTaskFromDat(projObj, taskName, dat):
+    pass
+
+def loadTask(projObj, taskName):
+    names = newTaskName.split('.')
+    check = taskCheck(projObj, taskName)
+    if isinstance(check, str) and (check==this.taskValid[0] or\
+                                   check==this.taskValid[1] or\
+                                   check==this.taskValid[2]):
+        return check
+    else:
+        return projObj.projDat['tasks'][taskName]
 
 def deleteTask(projObj, taskName):
     names = taskName.split('.')
@@ -352,3 +346,64 @@ def taskCheck(projObj, taskName):
 
 def taskStatus(projObj, taskName):
     pass
+
+def startTask(projObj, taskName):
+    if projObj.projDat['tasks'][taskName]['status'] == 'finished':
+        if click.confirm('That task is already finished.\n'+\
+                'would you like to restart it?', abort=True):
+            projObj.projDat['tasks'][taskName]['status'] = 'in-progress'
+    elif projObj.projDat['tasks'][taskName]['started']:
+        return 'Task already running'
+
+    projObj.projDat['tasks'][taskName]['status'] =\
+            'active'
+    projObj.projDat['tasks'][taskName]['started'] =\
+            datetime.datetime.now(datetime.\
+            timezone.utc).isoformat()
+    writeProj(projObj)
+
+def stopTask(projObj, taskName, confObj):
+    if not projObj.projDat['tasks'][taskName]['started']:
+        if projObj.projDat['tasks'][taskName]['status']=='finished':
+            return 'That task is already completed'
+        else: 
+            projObj.projDat['tasks'][taskName]['status']=\
+                    'in-progress'
+            return 'That task isn\'t running'
+    else:
+        projObj.projDat['tasks'][taskName]['status']=\
+                'in-progress'
+        timeDuo = [projObj.projDat['tasks'][taskName]['started'],\
+                datetime.datetime.now(datetime.timezone.\
+                utc).isoformat()]
+        projObj.projDat['tasks'][taskName]['sessions'].\
+                append({
+                    'user': confObj.confDat['user']['name'],
+                    'contact': confObj.confDat['user']['email'],
+                    'cost': projObj.projDat['team'][confObj.confDat[\
+                            'user']['name']]['cost'],
+                    'started':timeDuo[0],
+                    'stopped':timeDuo[-1],})
+        projObj.projDat['tasks'][taskName]['started']=''
+        projObj.projDat['tasks'][taskName]['timeSpent']=\
+                projObj.projDat['tasks'][taskName\
+                ]['timeSpent']+((datetime.datetime.\
+                fromisoformat(timeDuo[1])-datetime.\
+                datetime.fromisoformat(timeDuo[0])).\
+                total_seconds())
+        writeProj(projObj)
+
+def finishTask(projObj, taskName, confObj):
+    if not projObj.projDat['tasks'][taskName]['status'] == 'in-progress':
+        if projObj.projDat['tasks'][taskName]['status'] == 'finished':
+            return 'That task is already completed'
+        else: 
+            stopTask(projObj, taskName, confObj)
+
+    if projObj.projDat['tasks'][taskName]['children']:
+        for i in projObj.projDat['tasks'][taskName\
+                ]['children']:
+            projObj.finishTask(i, confObj)
+
+    projObj.projDat['tasks'][taskName]['status']='finished'
+    writeProj(projObj)
