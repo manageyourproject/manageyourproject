@@ -70,7 +70,7 @@ def new(ctx):
 @click.option('-sl', '--storeloc', default=None,\
         help='Location of the store for the project', type=str)
 @click.option('-f', '--force', is_flag=True,\
-        help='Location of the store for the project')
+        help='Force project creation (will overwrite any projects with the same name)')
 def proj(ctxObjs, projname, storetype, storeloc, force):
     for i in projname:
         output = main.makeProj(ctxObjs['confObj'], i, storetype, storeloc, force, None)
