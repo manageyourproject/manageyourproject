@@ -12,6 +12,7 @@ class taskObj:
             'name':'',
             'parent':None,
             'children':[],
+            'contributesto':[],
             'dependency':[],
             'datecreated':'',
             'status':'in-progress',
