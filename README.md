@@ -38,6 +38,8 @@ myp new proj 'build cart'
 ```
 Note the quotes around build cart. For names that have spaces in them, these are needed, otherwise myp will produce two projects: 'build' and 'cart'.
 
+Since this is the first time you've issued an myp command, you will be prompted to allow myp to create a config file, and asked to enter your name and email address. It should be noted that myp is not doing anything with your email or name, except storing it in the config file to have labels of who is creating tasks, projects, and what work someone has done on a task, much like git does.
+
 So now you have your project! Time to manage it. 
 Add a task to it. (Note: because you just created it, it will be the 'active project' and so new tasks will by default be added to it, and not any other projects)
 ```bash
@@ -62,6 +64,7 @@ myp task 'CAD model'.'find CAD tool' start
 ```
 You work for a little while, then decide its time to change it up. So you decide maybe you'll go to the store to buy the parts (despite not knowing what your cart will look like yet; a questionable decision) so you stop the 'find CAD tool' task and then start that task:
 ```bash
+myp task 'CAD model'.'find CAD tool' stop
 myp active 'build cart'
 myp task 'buy parts' start
 ```
@@ -74,16 +77,16 @@ Note: if you specify the project holding the task, that project will not be acti
 
 Before you can leave to go to the store, you realize you don't even know what you'd buy. You don't even know which store you'd go to, or for that matter, how much you'd have to budget! You quickly realize that this simple task is becoming more complex than you originally thought it would be. So you decide you want to promote the 'buy parts' task to a subproject of its own, and then add tasks for finding a low cost supplier, determining the budgetary constraints of the project, and going out to actually get the parts. Assuming that 'build cart' is active you first declare the task finished (for completeness) and then promote it:
 ```bash
-myp task 'build cart' finish
+myp task 'buy parts' finish
 myp promote 'buy parts' 'build cart'.'buy parts'
 myp active 'build cart'.'buy parts'
-myp new task 'determine budget' 'find supplyer' 'go to store'
+myp new task 'determine budget' 'find supplier' 'go to store'
 ```
 If you don't want to keep the old task listed as finished, you can just delete the old task when promoting it:
 ```bash
 myp promote 'buy parts' 'build cart'.'buy parts' --deleteold
 myp active 'build cart'.'buy parts'
-myp new task 'determine budget' 'find supplyer' 'go to store'
+myp new task 'determine budget' 'find supplier' 'go to store'
 ```
 Now you've got a few different tasks, under a couple of subprojects. To see you projects (with subprojects) you type:
 ```bash

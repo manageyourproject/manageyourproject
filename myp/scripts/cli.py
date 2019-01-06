@@ -419,7 +419,7 @@ def promote(ctxObjs, taskname, newprojname, parentprojname, deleteold):
         raise click.ClickException(output)
 
     if deleteold:
-        output = main.deleteTask(proj, taskname)
+        output = main.deleteTask(parproj, taskname)
         if isinstance(output, str):
             raise click.ClickException(output)
 
