@@ -189,11 +189,22 @@ def task(ctxObjs,projname):
     colAlt = False
     termWidth, _ = click.get_terminal_size()
     cellWidth=int(math.floor(termWidth/len(proj.projDat['currentformat']))-2)
+    cellWide=int(math.floor(termWidth/len(proj.projDat['currentformat']))-\
+                 2+(0.5*cellWidth))
+    cellThin=int(math.floor(termWidth/(len(proj.projDat['currentformat'])))-\
+                 2-(0.5*cellWidth))
     listDict={}
     listHead = ''
     for i in proj.projDat['currentformat']:
-        listHead = listHead + '| ' + '{i:<{width}}'.format(\
-                i=i, width=cellWidth)
+        if i == 'Total Time':
+            listHead = listHead + '| ' + '{i:<{width}}'.format(\
+                    i=i, width=cellThin)
+        elif i == 'Task Name':
+            listHead = listHead + '| ' + '{i:<{width}}'.format(\
+                    i=i, width=cellWide)
+        else:
+            listHead = listHead + '| ' + '{i:<{width}}'.format(\
+                    i=i, width=cellWidth)
 
     click.echo(Fore.WHITE+Back.BLACK+click.style(\
             '{:{width}}'.format('-'*termWidth,\
@@ -219,7 +230,25 @@ def task(ctxObjs,projname):
                     field = dt.datetime.fromisoformat(field).\
                             strftime('%Y/%m/%d')
                 elif j == 'timeSpent':
-                    field = float(field)
+                    timeraw = float(field)
+                    if timeraw > 60 and timeraw < 60*60:
+                        timemin = math.floor(timeraw/60)
+                        timesec = timeraw%60
+                        field = str(timemin)+'m '+str(timesec)+'s'
+                    elif timeraw > 60*60 and timeraw < 24*60*60:
+                        timehour = math.floor(timeraw/(60*60))
+                        timemin = math.floor((timeraw-(timehour*(60*60)))/60)
+                        timesec = timeraw%60
+                        field = str(timehour)+'h '+str(timemin)+'m'
+                    elif timeraw > 24*60*60:
+                        timeday = math.floor(timeraw/(24*60*60))
+                        timehour = math.floor((timeraw-(timeday*(24*60*60)))/(60*60))
+                        timemin = math.floor((timeraw-(timehour*(60*60))-\
+                                              (timeday*(24*60*60)))/60)
+                        timesec = timeraw%60
+                        field = str(timeday)+'d '+str(timehour)+'h'
+                    else:
+                        field = str(timeraw)+'s'
                 elif j == 'assignee':
                     assignees = ''
                     for k in dict(value[j]).keys():
@@ -229,7 +258,7 @@ def task(ctxObjs,projname):
                 if j == 'name' and value['parent']:
                     field = field.split('.')[-1]
                     listVals = listVals + '  ' + '{i:<{width}}'.format(\
-                            i=field, width=cellWidth-2, prec=3)
+                            i=field, width=cellWide-2, prec=3)
                 elif type(field) is float:
                     listVals = listVals + '{i:<{width}}'.format(\
                             i=field, width=cellWidth, prec=3)
@@ -237,8 +266,15 @@ def task(ctxObjs,projname):
                     listVals = listVals + '{i:<{width}}'.format(\
                             i=field, width=cellWidth, prec=2)
                 else:
-                    listVals = listVals + '{i:<{width}}'.format(\
-                            i=field, width=cellWidth)
+                    if j == 'timeSpent':
+                        listVals = listVals + '{i:<{width}}'.format(\
+                                i=field, width=cellThin)
+                    elif j == 'name':
+                        listVals = listVals + '{i:<{width}}'.format(\
+                                i=field, width=cellWide)
+                    else:
+                        listVals = listVals + '{i:<{width}}'.format(\
+                                i=field, width=cellWidth)
 
             listDict[listDictKey]=listVals
 
