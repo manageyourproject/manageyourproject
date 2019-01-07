@@ -302,7 +302,7 @@ def loadTask(projObj, taskName):
                                    check==this.taskValid[2]):
         return check
     else:
-        return taskName in projObj.projDat['tasks']
+        return projObj.projDat['tasks'][taskName]
 
 def deleteTask(projObj, taskName):
     names = taskName.split('.')
