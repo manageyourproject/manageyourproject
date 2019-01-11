@@ -249,7 +249,7 @@ def projStoreCheck(confObj, projName, storeType=None, storeLoc=None):
     else:
         return 'Can\'t load that store type'
 
-def updateProj(confObj, projName):
+def updateProj(confObj, projName, children, tasks):
     proj = loadProj(confObj,projName)
     if isinstance(proj, str):
         return proj
@@ -262,6 +262,9 @@ def updateProj(confObj, projName):
     else:
         return check
 
+    if tasks and originalDat['tasks']:
+        updateTask(confObj, proj, None, None) 
+
     output = deleteProj(confObj, projName)
     if isinstance(output, str):
         return output
@@ -269,11 +272,17 @@ def updateProj(confObj, projName):
     output = makeProj(confObj, projName, storeType, storeLoc, None, None)
     if isinstance(output, str):
         return output
+
     newProj = loadProj(confObj,projName)
     if isinstance(newProj, str):
         return newProj
 
     originalDat = proj.dumpProj()[0]
+    if children and originalDat['children']:
+        childList = originalDat['children']
+        for i in childList:
+            updateProj(confObj, '.'.join([projName, i]), children, tasks)
+
     for key, value in originalDat.items():
         if newProj.projDat[key]:
             newProj.projDat[key] = value
@@ -283,7 +292,7 @@ def updateProj(confObj, projName):
 def makeMilestone(projName):
     pass
 
-def makeTask(projObj, taskName, assignee, dat=None):
+def makeTask(projObj, taskName, assignee, dat=None, force=None):
     names = taskName.split('.')
     check = taskCheck(projObj, taskName)
     if isinstance(check, str) and (check==this.taskValid[0] or\
@@ -301,7 +310,9 @@ def makeTask(projObj, taskName, assignee, dat=None):
     else:
         if len(names) > 1:
             if not names[0] in projObj.projDat['tasks']:
-                if click.confirm('Parent task doesn\'t exists.\n'+\
+                if force:
+                    makeTask(projObj, names[0], assignee, None)
+                elif click.confirm('Parent task doesn\'t exists.\n'+\
                         'Would you like to create it?', abort=True):
                     makeTask(projObj, names[0], assignee, None)
 
@@ -326,9 +337,6 @@ def makeTask(projObj, taskName, assignee, dat=None):
 
         writeProj(projObj)
 
-def makeTaskFromDat(projObj, taskName, dat):
-    pass
-
 def loadTask(projObj, taskName):
     check = taskCheck(projObj, taskName)
     if isinstance(check, str) and (check==this.taskValid[0] or\
@@ -338,7 +346,7 @@ def loadTask(projObj, taskName):
     else:
         return projObj.projDat['tasks'][taskName]
 
-def deleteTask(projObj, taskName):
+def deleteTask(projObj, taskName, force=None):
     names = taskName.split('.')
     check = taskCheck(projObj, taskName)
     if isinstance(check, str) and (check==this.taskValid[0] or\
@@ -352,7 +360,13 @@ def deleteTask(projObj, taskName):
                     abort=True):
                 projObj.projDat['tasks'][names[0]]['children'].remove(names[-1])
         elif projObj.projDat['tasks'][taskName]['children']:
-            if click.confirm('Are you sure you want to delete this task and subtasks?',\
+            if force:
+                children = projObj.projDat['tasks'][taskName]['children']
+                for i in children:
+                    childName = '.'.join([taskName, i])
+                    del projObj.projDat['tasks'][childName]
+
+            elif click.confirm('Are you sure you want to delete this task and subtasks?',\
                     abort=True):
                 children = projObj.projDat['tasks'][taskName]['children']
                 for i in children:
@@ -442,6 +456,36 @@ def finishTask(projObj, taskName, confObj):
 
     projObj.projDat['tasks'][taskName]['status']='finished'
     writeProj(projObj)
+
+def updateTask(confObj, projObj, taskName=None, children):
+    if taskName:
+        check = taskCheck(projObj, taskName)
+        if isinstance(check, str) and (check==this.taskValid[0] or\
+                                       check==this.taskValid[1] or\
+                                       check==this.taskValid[2]):
+            return check
+
+        elif isinstance(check, str) and check==this.taskValid[3]:
+            deleteTask(proj, taskName)
+            makeTask(proj, taskName)
+            if children and proj.projDat['tasks'][taskName]['children']:
+                childList = proj.projDat['tasks'][taskName]['children']
+                for i in childList:
+                    updateTask(confObj, proj, '.'.join([taskName, i]), children)
+
+            for taskKey, taskValue in value.items():
+                if taskKey in proj.projDat['tasks'][taskName][key]:
+                    proj.projDat['tasks'][taskName][key][taskKey] = taskValue:
+
+    else:
+        for key, value in proj.projDat['tasks'].items():
+            deleteTask(proj, key)
+            makeTask(proj, key)
+            for taskKey, taskValue in value.items():
+                if taskKey in proj.projDat['tasks'][taskName][key]:
+                    proj.projDat['tasks'][taskName][key][taskKey] = taskValue:
+
+    writeProj(newProj)
 
 def promote(confObj, projName, taskParProj, taskName):
     check = projCheck(confObj, taskParProj.projName, None, None)
