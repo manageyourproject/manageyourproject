@@ -8,7 +8,7 @@ This project is currently under heavy development and stuff changes a lot from c
 If there are things not implemented that you feel would make this a better tool, please open an issue.
 
 ## Installation
-myp requires python 3 to run, and manages dependancies using pip. In the future, myp will be installable via pip, but as of right now it is only installable using the following commands. 
+myp requires python 3.7 to run, and manages dependancies using pip. In the future, myp will be installable via pip, but as of right now it is only installable using the following commands. 
 
 ```bash
 git clone https://github.com/manageyourproject/manageyourproject
@@ -16,7 +16,7 @@ cd manageyourproject
 pip3 install --user --editable ./
 ```
 
-NOTE: myp has only been tested with python 3 on a unix system. It is unknown if it will work on a windows machine, and suspected that it will not work with python <3.x
+NOTE: myp has only been tested with python 3 on a unix system. It is unknown if it will work on a windows machine, and suspected that it will not work with python >3.7
 
 ## Usage
 MYP is run through the commandline. Once installed through pip, it is executed using 

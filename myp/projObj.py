@@ -17,6 +17,7 @@ class projObj:
             'parent':None,
             'children':[],
             'creator':'',
+            'depends':[],
             'contributesto':[],
             'datecreated':'',
             'team':{},

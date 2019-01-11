@@ -249,6 +249,40 @@ def projStoreCheck(confObj, projName, storeType=None, storeLoc=None):
     else:
         return 'Can\'t load that store type'
 
+def updateProj(confObj, projName):
+    proj = loadProj(confObj,projName)
+    if isinstance(proj, str):
+        return proj
+
+    check = projStoreCheck(confObj, projName)
+    if isinstance(check, list):
+        storeType = check[0]
+        storeLoc = check[1]
+        projFile = check[2]
+    else:
+        return check
+
+    output = deleteProj(confObj, projName)
+    if isinstance(output, str):
+        return output
+
+    output = makeProj(confObj, projName, storeType, storeLoc, None, None)
+    if isinstance(output, str):
+        return output
+    newProj = loadProj(confObj,projName)
+    if isinstance(newProj, str):
+        return newProj
+
+    originalDat = proj.dumpProj()[0]
+    for key, value in originalDat.items():
+        if newProj.projDat[key]:
+            newProj.projDat[key] = value
+
+    writeProj(newProj)
+
+def makeMilestone(projName):
+    pass
+
 def makeTask(projObj, taskName, assignee, dat=None):
     names = taskName.split('.')
     check = taskCheck(projObj, taskName)
