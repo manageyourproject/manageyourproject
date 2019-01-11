@@ -13,7 +13,7 @@ class taskObj:
             'parent':None,
             'children':[],
             'contributesto':[],
-            'dependency':[],
+            'depends':[],
             'datecreated':'',
             'status':'in-progress',
             'started':'',
@@ -22,6 +22,7 @@ class taskObj:
             'assignee':{},
             'assetsused':{},
             'deadline':'',
+            'urgency':'',
             'recurs':{
                 'rate':0,
                 'frame':'day'

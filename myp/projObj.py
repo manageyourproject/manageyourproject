@@ -26,6 +26,7 @@ class projObj:
             'notes':[],
             'progress':{},
             'milestones':{},
+            'overallUrg':'',
             'assets':{},
             'currentformat':{\
                 'Task Name':'name',

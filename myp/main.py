@@ -457,7 +457,7 @@ def finishTask(projObj, taskName, confObj):
     projObj.projDat['tasks'][taskName]['status']='finished'
     writeProj(projObj)
 
-def updateTask(confObj, projObj, taskName=None, children):
+def updateTask(confObj, projObj, taskName=None, children=None):
     if taskName:
         check = taskCheck(projObj, taskName)
         if isinstance(check, str) and (check==this.taskValid[0] or\
@@ -475,7 +475,7 @@ def updateTask(confObj, projObj, taskName=None, children):
 
             for taskKey, taskValue in value.items():
                 if taskKey in proj.projDat['tasks'][taskName][key]:
-                    proj.projDat['tasks'][taskName][key][taskKey] = taskValue:
+                    proj.projDat['tasks'][taskName][key][taskKey] = taskValue
 
     else:
         for key, value in proj.projDat['tasks'].items():
@@ -483,7 +483,7 @@ def updateTask(confObj, projObj, taskName=None, children):
             makeTask(proj, key)
             for taskKey, taskValue in value.items():
                 if taskKey in proj.projDat['tasks'][taskName][key]:
-                    proj.projDat['tasks'][taskName][key][taskKey] = taskValue:
+                    proj.projDat['tasks'][taskName][key][taskKey] = taskValue
 
     writeProj(newProj)
 
