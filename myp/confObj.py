@@ -13,10 +13,14 @@
 import os
 import sys
 
-from myp import  main
-
 class confObj:
     def __init__(self, cfg, name=None, email=None, dat=None, *args,**kwargs):
+        self.projValid = [\
+                'Subprojects can\'t have children',
+                'Can\'t have identically named project and subproject',
+                ' does not exist',
+                ' already exists',
+                ]
         self.cfg = cfg     # getting default path
         self.cfgFile = os.path.join(self.cfg, 'config.yaml')           # default file location
         self.cfgProj = os.path.join(self.cfg, 'projects')             # default project path
@@ -61,8 +65,52 @@ class confObj:
     def dumpDat(self):
         return [self.confDat, self.cfgFile]
 
-    def trackProj(self, projName, storeType, storeLoc):
-        self.confDat['session']['projs'][projName]={
+    def addProj(self, projObj  *args, **kwargs):
+        storeType = projObj.projDat['storeType']
+        storeLoc = projObj.projDat['storeLoc']
+        self.confDat['session']['projs'][projObj.name]={
                 'storeType':storeType,
                 'storeLoc':storeLoc,
-                }
+
+    def projCheck(self, projName, storeType=None, storeLoc=None,\
+                  *args, **kwargs):
+        names=projName.split('.')
+        outStr = ''
+        if len(names) > 1:
+            if len(names) > 2:
+                outStr = self.projValid[0]
+            elif names[0]==names[-1]:
+                outStr = self.projValid[1]
+
+        if not projName in self.confDat['session']['projs']:
+            outStr = 'Project ' + projName + self.projValid[2]
+        else:
+            outStr = 'Project ' + projName + self.projValid[3]
+
+        return outStr
+
+    def projStoreCheck(self, projName, storeType=None, storeLoc=None):
+        names=projName.split('.')
+        if projName in self.confDat['session']['projs']:
+            storeType = self.confDat['session']['projs'][projName]['storeType']
+            storeLoc = self.confDat['session']['projs'][projName]['storeLoc']
+            projFile = os.path.join(storeLoc, names[-1]+'.yaml')
+            return [storeType, storeLoc, projFile]
+
+        elif not storeType:
+            storeType = self.confDat['session']['defaultstoretype']
+
+        if storeType == 'yaml':
+            if not storeLoc:
+                storeLoc = os.path.join(self.confDat['session']['defaultprojpath'], names[0])
+            elif storeLoc:
+                storeLoc = os.path.normpath(storeLoc)
+
+            projFile = os.path.join(storeLoc, names[-1]+'.yaml')
+            if not os.path.exists(storeLoc):
+                os.makedirs(storeLoc)
+
+        if storeType == 'yaml':
+            return [storeType, storeLoc, projFile]
+        else:
+            return 'Can\'t load that store type'
