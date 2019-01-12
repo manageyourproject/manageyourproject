@@ -10,9 +10,8 @@ from collections import OrderedDict
 from myp import confObj
 from myp import projObj
 from myp import taskObj
+from myp.scripts import cli
 from myp.utilities import datIO
-
-class Namespace: pass
 
 this = sys.modules[__name__]
 this.projValid = [\
@@ -29,19 +28,23 @@ this.taskValid = [\
         'Task already exists',
         ]
 
-def initWConf(cfg):
-    conf = confObj.confObj(cfg)
-    if not os.path.isfile(conf.cfgFile):
-        return 'No Config file found.'
+def initConf(cfg):
+    cfgFile = os.path.join(cfg, 'config.yaml')           # default file location
+    if not os.path.isfile(cfgFile):
+        name, email = getUserInfo()
+        conf = confObj.confObj(cfg=cfg, name=name, email=email)
+        writeConf(conf)
     else:
-        conf.loadDat(datIO.yamlRead(conf.cfgFile))
-        return conf
+        conf = confObj.confObj(cfg=cfg, dat=datIO.yamlRead(cfgFile))
 
-def makeConf(cfg, name, email):
-    conf = confObj.confObj(cfg)
-    conf.newConf(name, email)
-    writeConf(conf)
     return conf
+
+def getUserInfo():
+    cli.printToCli('No config file found.')
+    cli.getConfirmation('Would you like to create one?')
+    name = cli.getInput('Name:')
+    email = cli.getInput('Email:')
+    return [name, email]
 
 def writeConf(confObj):
     confDat, confLoc = confObj.dumpDat()
@@ -70,7 +73,7 @@ def makeProj(confObj, projName, storeType, storeLoc, overwrite, dat=None):
         return check
     
     elif check == this.projValid[3]:
-        if not overwrite and not dat and not click.confirm('Project already exists.\n'+\
+        if not overwrite and not dat and not cli.getConfirmation('Project already exists.\n'+\
                 'Would you like to overwrite it?'):
             return check
         elif dat and not overwrite:
@@ -88,8 +91,8 @@ def makeProj(confObj, projName, storeType, storeLoc, overwrite, dat=None):
 
     if len(names)>1:
         check = projCheck(confObj, names[0])
-        if check == this.projValid[2] and click.confirm(\
-                'Parent project doesn\'t exists.\n'+\
+        if check == this.projValid[2] and cli.getConfirmation(
+                'Parent project ' + str(names[0]) + 'doesn\'t exists.\n'+\
                 'Would you like to create it?', abort=True):
             output = makeProj(confObj, names[0], storeType, storeLoc, overwrite, None)
             if isinstance(output, str):
@@ -100,10 +103,9 @@ def makeProj(confObj, projName, storeType, storeLoc, overwrite, dat=None):
 
     confObj.trackProj(projName, storeType, storeLoc)
     if not dat:
-        createdProj = projObj.projObj(projName, projFile)
-        createdProj.newProj(confObj)
+        createdProj = projObj.projObj(projName, projFile, confObj=confObj)
     else:
-        createdProj = projObj.projObj(projName, projFile, dict(dat))
+        createdProj = projObj.projObj(projName, projFile, dat=dict(dat))
         createdProj.projDat['name'] = projName
     
     if len(names)>1:
@@ -119,7 +121,6 @@ def makeProj(confObj, projName, storeType, storeLoc, overwrite, dat=None):
             del createdProj.projDat['parent']
         if not 'children' in createdProj.projDat:
             createdProj.projDat['children'] = []
-
 
     writeProj(createdProj)
     writeConf(confObj)
@@ -141,7 +142,7 @@ def loadProj(confObj, projName, storeType=None, storeLoc=None):
     else:
         return check
 
-    loadedProj = projObj.projObj(projName, projFile, datIO.yamlRead(projFile))
+    loadedProj = projObj.projObj(projName, projFile, dat=datIO.yamlRead(projFile))
     return loadedProj
 
 def copyProj(confObj, projName, newProjName, deleteold):
@@ -249,8 +250,10 @@ def projStoreCheck(confObj, projName, storeType=None, storeLoc=None):
     else:
         return 'Can\'t load that store type'
 
-def updateProj(confObj, projName, children, tasks):
-    proj = loadProj(confObj,projName)
+def updateProj(confObj, projName=None, children=True, tasks=True, *args, **kwargs):
+    if not projName:
+        for key, value in confObj.confDat['session']['projs'].items():
+            proj = loadProj(confObj,projName)
     if isinstance(proj, str):
         return proj
 

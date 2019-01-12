@@ -6,13 +6,10 @@ import os
 import datetime
 
 class projObj:
-    def __init__(self, projName, projFile, projDat=None):
-        self.projName = projName
+    def __init__(self, projName, projFile, confObj=None, dat=None, *args, **kwargs):
+        self.name = projName
         self.projFile = projFile
-        self.projDat = projDat
-
-    def defaultProj(self):
-        defaultProj = {
+        self.projDat = {
             'name':'',
             'parent':None,
             'children':[],
@@ -28,30 +25,39 @@ class projObj:
             'milestones':{},
             'overallUrg':'',
             'assets':{},
-            'currentformat':{\
+            'currentformat':{
                 'Task Name':'name',
                 'Total Time': 'timeSpent',
                 'Assigned To': 'assignee'
-                }
+            }
         }
-        return defaultProj
+        if not dat and confObj:
+            self.newProj(confObj)
+        elif dat:
+            self.projDat.update(dat)
 
     def newProj(self, confObj):
-        self.projDat=self.defaultProj()
-        self.projDat['name'] = self.projName
-        self.projDat['creator'] = confObj.confDat['user']['name']
-        self.projDat['datecreated'] = datetime.datetime.now(\
+        projDat={
+            'name':'',
+            'creator':'',
+            'datecreated':'',
+            'team':{},
+        }
+        projDat['name'] = projName
+        projDat['creator'] = confObj.confDat['user']['name']
+        projDat['datecreated'] = datetime.datetime.now(\
                         datetime.timezone.utc).isoformat()
-        self.projDat['team'][confObj.confDat['user']['name']]={
+        projDat['team'][confObj.confDat['user']['name']]={
                 'contact': confObj.confDat['user']['email'],
                 'cost': confObj.confDat['user']['cost'],
                 }
+        self.projDat.update(projDat)
         
     def dumpProj(self):
         return [self.projDat, self.projFile]
 
     def loadProj(self, dat):
-        self.projDat = dat
+        self.projDat.update(dat)
 
     def giveParent(self, parName):
         self.projDat['parent'] = parName

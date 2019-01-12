@@ -17,9 +17,9 @@ setuptools.setup(
         install_requires=[
             'colorama',
             'click',
-            'configparser',
             'networkx',
             'ruamel.yaml',
+            'pandas',
         ],
         packages=setuptools.find_packages(),
         classifiers=[

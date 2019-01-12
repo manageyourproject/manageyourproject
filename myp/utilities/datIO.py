@@ -8,7 +8,10 @@ def yamlWrite(dat, location):                                # the write file fu
 
 def yamlRead(location):                                 # the read file function
     yaml=YAML()
-    with open(location, 'r') as fp:
-        dat = yaml.load(fp)             # if it is found, read it
+    try:
+        with open(location, 'r') as fp:
+            dat = yaml.load(fp)             # if it is found, read it
 
-    return dat
+        return dat
+    except:
+        return

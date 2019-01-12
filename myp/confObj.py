@@ -13,16 +13,15 @@
 import os
 import sys
 
+from myp import  main
+
 class confObj:
-    def __init__(self, cfg):
+    def __init__(self, cfg, name=None, email=None, dat=None, *args,**kwargs):
         self.cfg = cfg     # getting default path
         self.cfgFile = os.path.join(self.cfg, 'config.yaml')           # default file location
         self.cfgProj = os.path.join(self.cfg, 'projects')             # default project path
-        self.confDat = {}                               # the confdat "dict"
-
-    def defaultConf(self):
-        defaultConf = {
-                'user':{
+        self.confDat = {                               # the confdat "dict"
+            'user':{
                 'name':'',
                 'email':'',
                 'cost':0,
@@ -39,16 +38,25 @@ class confObj:
                 },
             }
         }
-        return defaultConf
+        if not dat and name and email:
+            self.newConf(name, email)
+        elif dat:
+            self.confDat.update(dat)
 
     def newConf(self, name, email):
-        self.confDat = self.defaultConf()
-        self.confDat['user']['name'] = name
-        self.confDat['user']['email'] = email
-        self.confDat['session']['defaultprojpath']=self.cfgProj
-
-    def loadDat(self, dat):
-        self.confDat = dat
+        confDat = {
+            'user':{
+                'name':'',
+                'email':''
+            },
+            'session':{
+                'defaultprojpath':''
+            }
+        }
+        confDat['user']['name'] = name
+        confDat['user']['email'] = email
+        confDat['session']['defaultprojpath']=self.cfgProj
+        self.confDat.update(confDat)
 
     def dumpDat(self):
         return [self.confDat, self.cfgFile]

@@ -20,20 +20,7 @@ def cli(ctx):
     if ctx.obj is None:
         ctx.obj = dict()
 
-    ctx.obj['confObj'] = main.initWConf(cfg)
-
-    if isinstance(ctx.obj['confObj'], str):
-        click.echo(ctx.obj['confObj'])
-        if click.confirm('Would you like to create it ' +
-                'and enter a user and email address?',
-                abort=True):                        # if no file can be found
-
-            if not os.path.exists(cfg):                # check if the config file exists
-                os.makedirs(cfg)                       # create it if unfound
-
-            name = click.prompt('Name', type=str)
-            email = click.prompt('E-mail Address', type=str)
-            ctx.obj['confObj'] = main.makeConf(cfg, name, email)
+    ctx.obj['confObj'] = main.initConf(cfg)
 
     if ctx.invoked_subcommand is None:
         click.echo(main.getActive(ctx.obj['confObj']))
@@ -515,6 +502,18 @@ def kanban(confObj):
 @click.pass_obj
 def burndown(confObj):
     pass
+
+def printToCli(message):
+    click.echo(message)
+
+def getInput(message, inputType=str, *args, **kwargs):
+    return click.prompt(message, type=inputType)
+
+def getConfirmation(message, abort=True, *args, **kwargs):
+    return click.confirm(message, abort=abort)
+
+def showError(message):
+    raise click.ClickException(message)
 
 if __name__ == '__main__':
     cli()
