@@ -78,11 +78,11 @@ def makeProj(confObj, projName, storeType, storeLoc, force=False,\
         check = confObj.projCheck(names[0])
         if check.endswith(confObj.projValid[2]):
             if not force:
-                cli.getConfirmation('Parent ' + check + '\nWould you like to create it?'):
+                cli.getConfirmation('Parent ' + check + '\nWould you like to create it?')
 
             createdProj.giveParent(names[0])
             parProj = confObj.addProj(names[0], storeType=StoreType,\
-                                  storeLoc=storeLoc, force=force, None)
+                                  storeLoc=storeLoc, force=force)
             if isinstance(parProj, str):
                 return parProj
 
@@ -190,13 +190,25 @@ def deleteProj(confObj, projName, storeType=None, storeLoc=None):
 
     writeConf(confObj)
 
-def newTask():
+def copyTask(confObj, projObj, taskName, newProjObj=None, newTaskName=None, *args, **kwargs):
     pass
 
-def deleteTask():
+def newTask(confObj, projObj, taskName):
     pass
 
-def updateFiles(confObj, projName=None, children=True, tasks=True, *args, **kwargs):
+def deleteTask(confObj, projObj, taskName):
+    pass
+
+def startTask(confObj, projObj, taskName):
+    pass
+
+def stopTask(confObj, projObj, taskName):
+    pass
+
+def finishTask(confObj, projObj, taskName):
+    pass
+
+def updateFiles(confObj, projName=None, *args, **kwargs):
     if not projName:
         for key, value in confObj.confDat['session']['projs'].items():
             proj = loadProj(confObj,projName)

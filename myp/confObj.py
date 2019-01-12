@@ -65,12 +65,13 @@ class confObj:
     def dumpDat(self):
         return [self.confDat, self.cfgFile]
 
-    def addProj(self, projObj  *args, **kwargs):
+    def addProj(self, projObj, *args, **kwargs):
         storeType = projObj.projDat['storeType']
         storeLoc = projObj.projDat['storeLoc']
         self.confDat['session']['projs'][projObj.name]={
-                'storeType':storeType,
-                'storeLoc':storeLoc,
+            'storeType':storeType,
+            'storeLoc':storeLoc,
+        }
 
     def projCheck(self, projName, storeType=None, storeLoc=None,\
                   *args, **kwargs):

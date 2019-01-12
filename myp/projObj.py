@@ -63,7 +63,7 @@ class projObj:
     def dumpProj(self):
         datDump = self.projDat
         for key, value in datDump['tasks'].items():
-            datDump['tasks'][key]=value.dumpTask():
+            datDump['tasks'][key]=value.dumpTask()
 
         return [datDump, self.projFile]
 
@@ -114,13 +114,24 @@ class projObj:
                 if not names[0] in self.projDat['tasks']:
                     if not force:
                         cli.getConfirmation('Parent task doesn\'t exists.\n'+\
-                            'Would you like to create it?'):
+                            'Would you like to create it?')
 
                     parTask = self.makeTask(names[0], assignee)
                     newTask.giveParent(names[0])
                     parTask.giveChildren(names[-1])
 
             self.projDat['tasks'][taskName]=newTask
+
+    def loadTask(self, taskName):
+        names = taskName.split('.')
+        check = self.taskCheck(taskName)
+        if isinstance(check, str) and (check.endswith(self.taskValid[0]) or\
+                                       check.endswith(self.taskValid[1]) or\
+                                       check.endswith(self.taskValid[2])):
+            return check
+
+        elif isinstance(check, str) and check.endswith(self.taskValid[3]):
+            return self.projDat['tasks'][taskName]
 
     def deleteTask(self, taskName, force=None):
         names = taskName.split('.')

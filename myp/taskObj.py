@@ -32,7 +32,6 @@ class taskObj:
                 'slack':'',
             },
             'notes':[],
-            }
         }
         if not taskDat and assignee:
             self.newTask(assignee, assigneeDeet)
@@ -101,7 +100,7 @@ class taskObj:
                 ((datetime.datetime.fromisoformat(timeDuo[1])-\
                   datetime.datetime.fromisoformat(timeDuo[0])).total_seconds())
 
-    def finishTask(self, projObj, confObj):
+    def finishTask(self, confObj, projObj):
         if not self.taskDat['status'] == 'in-progress':
             if self.taskDat['status'] == 'finished':
                 return 'That task is already completed'

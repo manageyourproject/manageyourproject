@@ -90,7 +90,7 @@ def task(ctxObjs,taskname,projname, assignee):
         raise click.ClickException(proj)
 
     for i in taskname:
-        output = main.makeTask(proj, i, assignee, None)
+        output = proj.addTask(i, assignee)
         if isinstance(output, str):
             raise click.ClickException(output)
 
@@ -302,7 +302,7 @@ def task(ctxObjs,taskname,projname):
         raise click.ClickException(proj)
 
     for i in taskname:
-        output = main.deleteTask(proj, i)
+        output = proj.deleteTask(i, force=None)
         if isinstance(output, str):
             raise click.ClickException(output)
 
@@ -383,31 +383,31 @@ def task(ctxObjs, taskname, projname):
     if isinstance(proj, str):
         raise click.ClickException(proj)
 
-    task = main.loadTask(proj, taskname)
+    task = proj.loadTask(taskName) 
     if isinstance(task, str):
         raise click.ClickException(task)
 
-    ctxObjs['taskname']=taskname
+    ctxObjs['taskObj']=task
     ctxObjs['projObj']=proj
 
 @task.command(help='Start tracking time for task')
 @click.pass_obj
 def start(ctxObjs):
-    output = main.startTask(ctxObjs['projObj'],ctxObjs['taskname'])
+    output = ctxObjs['taskObj'].startTask()
     if isinstance(output, str):
         raise click.ClickException(output)
 
 @task.command(help='Stop tracking time for task')
 @click.pass_obj
 def stop(ctxObjs):
-    output = main.stopTask(ctxObjs['projObj'],ctxObjs['taskname'],ctxObjs['confObj'])
+    output = ctxObjs['taskObj'].stopTask(ctxObjs['confObj'])
     if isinstance(output, str):
         raise click.ClickException(output)
 
 @task.command(help='Stop tracking time for task')
 @click.pass_obj
 def finish(ctxObjs):
-    output = main.finishTask(ctxObjs['projObj'],ctxObjs['taskname'],ctxObjs['confObj'])
+    output = ctxObjs['taskObj'].finishTask(ctxObjs['confObj'], ctxObjs['projObj'])
     if isinstance(output, str):
         raise click.ClickException(output)
 
