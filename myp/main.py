@@ -38,7 +38,7 @@ def writeConf(confObj):
 def makeActive(confObj, projname=None):                # mark a project as active
     if projname:
         check = confObj.projCheck(projname)
-        if isinstance(check, str) and not check == confObj.projValid[3]:
+        if isinstance(check, str) and not check.endswith(confObj.projValid[3]):
             return check
 
     confObj.confDat['session']['active']=projname
@@ -55,7 +55,7 @@ def makeProj(confObj, projName, storeType, storeLoc, force=False,\
     names=projName.split('.')
     check = confObj.projCheck(projName)
     if isinstance(check, str) and (check.endswith(confObj.projValid[0]) or\
-                                   check.endswith(projValid[1])):
+                                   check.endswith(confObj.projValid[1])):
         return check
     
     elif check.endswith(confObj.projValid[3]):
@@ -107,7 +107,7 @@ def loadProj(confObj, projName, storeType=None, storeLoc=None):
     names=projName.split('.')
     check = confObj.projCheck(projName)
     if isinstance(check, str) and (check.endswith(confObj.projValid[0]) or\
-                                   check.endswith(projValid[1]) or \
+                                   check.endswith(confObj.projValid[1]) or \
                                    check.endswith(confObj.projValid[2])):
         return check
     
@@ -148,7 +148,7 @@ def deleteProj(confObj, projName, storeType=None, storeLoc=None):
     names=projName.split('.')
     check = confObj.projCheck(projName)
     if isinstance(check, str) and (check.endswith(confObj.projValid[0]) or\
-                                   check.endswith(projValid[1]) or \
+                                   check.endswith(confObj.projValid[1]) or \
                                    check.endswith(confObj.projValid[2])):
         return check
 
@@ -191,21 +191,6 @@ def deleteProj(confObj, projName, storeType=None, storeLoc=None):
     writeConf(confObj)
 
 def copyTask(confObj, projObj, taskName, newProjObj=None, newTaskName=None, *args, **kwargs):
-    pass
-
-def newTask(confObj, projObj, taskName):
-    pass
-
-def deleteTask(confObj, projObj, taskName):
-    pass
-
-def startTask(confObj, projObj, taskName):
-    pass
-
-def stopTask(confObj, projObj, taskName):
-    pass
-
-def finishTask(confObj, projObj, taskName):
     pass
 
 def updateFiles(confObj, projName=None, *args, **kwargs):

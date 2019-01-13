@@ -5,6 +5,7 @@
 import os
 import datetime
 
+from myp import taskObj
 from myp.scripts import cli
 
 class projObj:
@@ -40,7 +41,7 @@ class projObj:
         if not dat and confObj:
             self.newProj(confObj)
         elif dat:
-            self.projDat.update(dat)
+            self.loadProj(dat)
             self.projDat['name']=projName
 
     def newProj(self, confObj):
@@ -146,12 +147,12 @@ class projObj:
                 if not force:
                     cli.getConfirmation('Are you sure you want to delete this subtask?')
 
-                projObj.projDat['tasks'][names[0]].taskDat['children'].remove(names[-1])
-            elif projObj.projDat['tasks'][taskName]['children']:
+                self.projDat['tasks'][names[0]].taskDat['children'].remove(names[-1])
+            elif self.projDat['tasks'][taskName]['children']:
                 if not force:
                     cli.getConfirmation('Are you sure you want to delete this task and subtasks?')
 
-                children = projObj.projDat['tasks'][taskName].taskDat['children']
+                children = self.projDat['tasks'][taskName].taskDat['children']
                 for i in children:
                     childName = '.'.join([taskName, i])
                     self.deleteTask(childName, force=True)
@@ -160,7 +161,7 @@ class projObj:
                 if not force:
                     cli.getConfirmation('Are you sure you want to delete this task?')
 
-            del projObj.projDat['tasks'][taskName]
+            del self.projDat['tasks'][taskName]
 
     def taskCheck(self, taskName):
         names=taskName.split('.')
@@ -170,7 +171,7 @@ class projObj:
             elif names[0]==names[-1]:
                 outStr = self.taskValid[1]
 
-        if not taskName in projObj.projDat['tasks']:
+        if not taskName in self.projDat['tasks']:
             outStr = 'Task ' + taskName + self.taskValid[2]
         else:
             outStr = 'Task ' + taskName + self.taskValid[3]

@@ -94,6 +94,8 @@ def task(ctxObjs,taskname,projname, assignee):
         if isinstance(output, str):
             raise click.ClickException(output)
 
+        main.writeProj(proj)
+
 
 @cli.group()
 @click.pass_context
@@ -169,10 +171,6 @@ def task(ctxObjs,projname):
     if isinstance(proj, str):
         raise click.ClickException(proj)
 
-    active = main.makeActive(ctxObjs['confObj'], projname)
-    if isinstance(active, str):
-        raise click.ClickException(active)
-
     colAlt = False
     termWidth, _ = click.get_terminal_size()
     cellWidth=int(math.floor(termWidth/len(proj.projDat['currentformat']))-2)
@@ -204,14 +202,14 @@ def task(ctxObjs,projname):
     colAlt = not colAlt
     for key, value in proj.projDat['tasks'].items():
         listVals = ''
-        if not value['status'] == 'finished':
+        if not value.status() == 'finished':
             for i, j in proj.projDat['currentformat'].items():
                 listVals = listVals+'| '
                 if j == 'name':
                     listDictKey = key
                     field = key
                 else:
-                    field = value[j]
+                    field = value.taskDat[j]
 
                 if j == 'datecreated':
                     field = dt.datetime.fromisoformat(field).\
@@ -238,11 +236,11 @@ def task(ctxObjs,projname):
                         field = str(timeraw)+'s'
                 elif j == 'assignee':
                     assignees = ''
-                    for k in dict(value[j]).keys():
+                    for k in dict(value.taskDat[j]).keys():
                         assignees = assignees + k
                     field = assignees
 
-                if j == 'name' and value['parent']:
+                if j == 'name' and value.taskDat['parent']:
                     field = field.split('.')[-1]
                     listVals = listVals + '  ' + '{i:<{width}}'.format(\
                             i=field, width=cellWide-2, prec=3)
@@ -306,6 +304,8 @@ def task(ctxObjs,taskname,projname):
         if isinstance(output, str):
             raise click.ClickException(output)
 
+    main.writeProj(proj)
+
 @cli.group()
 @click.pass_context
 def copy(ctx):
@@ -344,7 +344,7 @@ def task(ctxObjs, taskname, newtaskname, projname, newtaskproj, deleteold):
     if isinstance(proj, str):
         raise click.ClickException(proj)
 
-    task = main.loadTask(proj, taskname)
+    task = proj.loadTask(taskname)
     if isinstance(task, str):
         raise click.ClickException(task)
 
@@ -383,7 +383,7 @@ def task(ctxObjs, taskname, projname):
     if isinstance(proj, str):
         raise click.ClickException(proj)
 
-    task = proj.loadTask(taskName) 
+    task = proj.loadTask(taskname) 
     if isinstance(task, str):
         raise click.ClickException(task)
 
@@ -397,6 +397,8 @@ def start(ctxObjs):
     if isinstance(output, str):
         raise click.ClickException(output)
 
+    main.writeProj(ctxObjs['projObj'])
+
 @task.command(help='Stop tracking time for task')
 @click.pass_obj
 def stop(ctxObjs):
@@ -404,12 +406,16 @@ def stop(ctxObjs):
     if isinstance(output, str):
         raise click.ClickException(output)
 
+    main.writeProj(ctxObjs['projObj'])
+
 @task.command(help='Stop tracking time for task')
 @click.pass_obj
 def finish(ctxObjs):
     output = ctxObjs['taskObj'].finishTask(ctxObjs['confObj'], ctxObjs['projObj'])
     if isinstance(output, str):
         raise click.ClickException(output)
+
+    main.writeProj(ctxObjs['projObj'])
 
 @cli.command(help='Promote a task/subtask to project/subproject')
 @click.pass_obj
@@ -429,7 +435,7 @@ def promote(ctxObjs, taskname, newprojname, parentprojname, deleteold):
     if isinstance(parproj, str):
         raise click.ClickException(parproj)
 
-    task = main.loadTask(parproj, taskname)
+    task = parproj.loadTask(taskname)
     if isinstance(task, str):
         raise click.ClickException(task)
 
