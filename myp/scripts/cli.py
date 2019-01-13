@@ -240,7 +240,7 @@ def task(ctxObjs,projname):
                         assignees = assignees + k
                     field = assignees
 
-                if j == 'name' and value.taskDat['parent']:
+                if j == 'name' and 'parent' in value.taskDat:
                     field = field.split('.')[-1]
                     listVals = listVals + '  ' + '{i:<{width}}'.format(\
                             i=field, width=cellWide-2, prec=3)
@@ -356,16 +356,16 @@ def task(ctxObjs, taskname, newtaskname, projname, newtaskproj, deleteold):
         if isinstance(newproj, str):
             raise click.ClickException(proj)
 
-        output = main.makeTask(newproj, newtaskname, None, task)
+        output = newproj.makeTask(newtaskname, dat=task.dumpTask())
         if isinstance(output, str):
             raise click.ClickException(output)
     else:
-        output = main.makeTask(proj, newtaskname, None, task)
+        output = proj.makeTask(newtaskname, dat=task.dumpTask())
         if isinstance(output, str):
             raise click.ClickException(output)
 
     if deleteold:
-        output = main.deleteTask(proj, taskname)
+        output = proj.deleteTask(taskname)
         if isinstance(output, str):
             raise click.ClickException(output)
 
@@ -443,14 +443,16 @@ def promote(ctxObjs, taskname, newprojname, parentprojname, deleteold):
         names=taskname.split('.')
         newprojname = names[-1]
 
-    output = main.promote(ctxObjs['confObj'],newprojname, parproj, taskname)
+    output = main.promote(ctxObjs['confObj'],newprojname, parproj, taskObj)
     if isinstance(output, str):
         raise click.ClickException(output)
 
     if deleteold:
-        output = main.deleteTask(parproj, taskname)
+        output = parproj.deleteTask(taskname)
         if isinstance(output, str):
             raise click.ClickException(output)
+
+        main.writeProj(parproj)
 
 @cli.command(help='Demote a project/subproject to a task/subtask')
 @click.pass_obj
@@ -483,9 +485,17 @@ def demote(ctxObjs, projname, parentprojname, taskname, deleteold):
         raise click.ClickException(output)
 
     if deleteold:
-        output = main.deleteProj(confObk, proj)
+        output = main.deleteProj(confObj, proj)
         if isinstance(output, str):
             raise click.ClickException(output)
+
+@cli.command(help='Update all project or all files to current format')
+@click.pass_obj
+@click.argument('projname', required=False, type=str)
+def update(ctxObjs, projname):
+    output = main.updateFiles(ctxObjs['confObj'], projname)
+    if isinstance(output, str):
+        raise click.ClickException(output)
 
 @cli.group()
 @click.pass_context

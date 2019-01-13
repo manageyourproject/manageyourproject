@@ -61,9 +61,9 @@ def makeProj(confObj, projName, storeType, storeLoc, force=False,\
     elif check.endswith(confObj.projValid[3]):
         if not force and cli.getConfirmation(check+\
                 '\nWould you like to overwrite it?'):
-            confObj.deleteProj(projName)
+            deleteProj(projName)
         elif force:
-            confObj.deleteProj(projName)
+            deleteProj(projName)
 
     check = confObj.projStoreCheck(projName)
     if isinstance(check, list):
@@ -98,6 +98,7 @@ def makeProj(confObj, projName, storeType, storeLoc, force=False,\
     writeProj(createdProj)
     confObj.addProj(createdProj)
     writeConf(confObj)
+    return createdProj
 
 def writeProj(projObj):
     projDat, projFile = projObj.dumpProj()
@@ -191,15 +192,35 @@ def deleteProj(confObj, projName, storeType=None, storeLoc=None):
     writeConf(confObj)
 
 def copyTask(confObj, projObj, taskName, newProjObj=None, newTaskName=None, *args, **kwargs):
-    pass
+    if not newtaskname:
+        newtaskname = taskname
+
+    if newtaskproj:
+        newproj = main.loadProj(ctxObjs['confObj'],newtaskproj)
+        if isinstance(newproj, str):
+            raise click.ClickException(proj)
+
+        output = main.makeTask(newproj, newtaskname, None, task)
+        if isinstance(output, str):
+            raise click.ClickException(output)
+    else:
+        output = main.makeTask(proj, newtaskname, None, task)
+        if isinstance(output, str):
+            raise click.ClickException(output)
+
+    if deleteold:
+        output = deleteTask(proj, taskname)
+        if isinstance(output, str):
+            raise click.ClickException(output)
 
 def updateFiles(confObj, projName=None, *args, **kwargs):
     if not projName:
         for key, value in confObj.confDat['session']['projs'].items():
-            proj = loadProj(confObj,projName)
+            proj = loadProj(confObj,key)
             if isinstance(proj, str):
                 return proj
 
+            cli.printToCli('Updating project: ' + key)
             writeProj(proj)
 
     else:
@@ -209,12 +230,12 @@ def updateFiles(confObj, projName=None, *args, **kwargs):
 def makeMilestone(projName):
     pass
 
-def promote(confObj, projName, taskParProj, taskName):
-    check = projCheck(confObj, taskParProj.projName, None, None)
+def promote(confObj, newProjName, parProj, taskObj):
+    check = confObj.projCheck(newProjName)
     if isinstance(check, str) and not check == confObj.projValid[3]:
         return check
 
-    check = projStoreCheck(confObj, taskParProj.projName, None, None)
+    check = confObj.projStoreCheck(parProj)
     if isinstance(check, list):
         storeType = check[0]
         storeLoc = check[1]
@@ -222,15 +243,12 @@ def promote(confObj, projName, taskParProj, taskName):
     else:
         return check
     
-    output = makeProj(confObj, projName, storeType, storeLoc, None, None)
-    if isinstance(output, str):
-        return output
-
-    newProj = loadProj(confObj, projName)
-    if isinstance(output, str):
+    newProj = makeProj(confObj, projName, storeType, storeLoc, None, None)
+    if isinstance(newProj, str):
         return newProj
 
-    for key, value in taskParProj.projDat['tasks'][taskName].items():
+    taskDat = taskObj.dumpTask()
+    for key, value in taskDat.items():
         if (key in newProj.projDat\
                 and not key == 'parent'\
                 and not key == 'children'\
@@ -238,19 +256,15 @@ def promote(confObj, projName, taskParProj, taskName):
                 and not key == 'name'):
             newProj.projDat[key]=value
         if key == 'assignee':
-            for i, j in taskParProj.projDat['tasks'][taskName]['assignee'].items():
+            for i, j in taskDat['assignee'].items():
                 newProj.projDat['team'][i]=j
 
     writeProj(newProj)
 
 def demote(confObj, proj, parentproj, taskname):
-    output = makeTask(parentproj, taskname, None, None)
+    output = parentproj.makeTask(taskname)
     if isinstance(output, str):
-        raise click.ClickException(output)
-
-    parentproj = loadProj(confObj, parentproj.projName)
-    if isinstance(parentproj, str):
-        return parentproj
+        return output
 
     for key, value in proj.projDat.items():
         if (key in parentproj.projDat\
@@ -258,4 +272,6 @@ def demote(confObj, proj, parentproj, taskname):
                 and not key == 'children'\
                 and not key == 'assignee'\
                 and not key == 'name'):
-            parentproj.projDat['tasks'][taskname][key]=value
+            output.taskDat[key]=value
+
+    writeProj(parentProj)

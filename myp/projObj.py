@@ -122,6 +122,8 @@ class projObj:
                     parTask.giveChildren(names[-1])
 
             self.projDat['tasks'][taskName]=newTask
+        
+        return newTask
 
     def loadTask(self, taskName):
         names = taskName.split('.')
