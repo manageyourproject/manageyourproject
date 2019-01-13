@@ -221,6 +221,13 @@ def updateFiles(confObj, projName=None, *args, **kwargs):
                 return proj
 
             cli.printToCli('Updating project: ' + key)
+            for key, value in proj.projDat['tasks'].items():
+                if 'children' in value.taskDat and not value.taskDat['children']:
+                    del value.taskDat['children']
+
+                if 'parent' in value.taskDat and not value.taskDat['parent']:
+                    del value.taskDat['parent']
+
             writeProj(proj)
 
     else:
