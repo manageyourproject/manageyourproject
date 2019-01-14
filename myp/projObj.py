@@ -42,7 +42,7 @@ class projObj:
         if not dat and confObj:
             self.newProj(confObj)
         elif dat:
-            self.loadProj(dat)
+            self.loadProj(dict(dat))
             self.projDat['name']=projName
 
     def newProj(self, confObj):
@@ -143,6 +143,7 @@ class projObj:
     def deleteTask(self, taskName, force=None):
         names = taskName.split('.')
         check = self.taskCheck(taskName)
+        task = self.loadTask(taskName).dumpTask()
         if isinstance(check, str) and (check.endswith(self.taskValid[0]) or\
                                        check.endswith(self.taskValid[1]) or\
                                        check.endswith(self.taskValid[2])):
@@ -153,12 +154,15 @@ class projObj:
                 if not force:
                     cliUtils.getConfirmation('Are you sure you want to delete this subtask?')
 
-                self.projDat['tasks'][names[0]].taskDat['children'].remove(names[-1])
-            elif 'children' in self.projDat['tasks'][taskName]:
+                parTask = self.loadTask(names[0]).dumpTask()
+                parTask['children'].remove(names[-1])
+                if not parTask['children']:
+                    del parTask['children']
+            elif 'children' in task:
                 if not force:
                     cliUtils.getConfirmation('Are you sure you want to delete this task and subtasks?')
 
-                children = self.projDat['tasks'][taskName].taskDat['children']
+                children = task['children']
                 for i in children:
                     childName = '.'.join([taskName, i])
                     self.deleteTask(childName, force=True)

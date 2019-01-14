@@ -35,9 +35,9 @@ class taskObj:
             'notes':[],
         }
         if not taskDat and assignee:
-            self.newTask(assignee, assigneeDeet)
+            self.newTask(assignee, dict(assigneeDeet))
         else:
-            self.taskDat.update(taskDat)
+            self.taskDat.update(dict(taskDat))
             self.taskDat['name']=taskName
 
     def newTask(self, assignee, assigneeDeet):
