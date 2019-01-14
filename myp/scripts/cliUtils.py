@@ -27,7 +27,6 @@ def formatPrint(termWidth, rowDict):
                 i['width'] += remain
 
         row.append(textwrap.wrap(i['text'],i['width']))
-    # print(termWidth)
     for n in range(max([len(i) for i in row])):
         for count, col in enumerate(row):
             formattedStr += rowDict[count]['lead']
@@ -36,7 +35,6 @@ def formatPrint(termWidth, rowDict):
                     format(i=col[n], width=rowDict[count]['width'])
             else:
                 formattedStr += ' '*rowDict[count]['width']
-
 
     return formattedStr
 
