@@ -6,7 +6,7 @@ import os
 import datetime
 
 from myp import taskObj
-from myp.scripts import cli
+from myp.scripts import cliUtils
 
 class projObj:
     def __init__(self, projName, projFile, confObj=None, dat=None, *args, **kwargs):
@@ -21,6 +21,7 @@ class projObj:
         self.projDat = {
             'name':'',
             'creator':'',
+            'description':'',
             'depends':[],
             'contributesto':[],
             'datecreated':'',
@@ -118,8 +119,11 @@ class projObj:
                             'Would you like to create it?')
 
                     parTask = self.makeTask(names[0], assignee)
-                    newTask.giveParent(names[0])
-                    parTask.giveChildren(names[-1])
+                else:
+                    parTask = self.loadTask(names[0])
+                        
+                newTask.giveParent(names[0])
+                parTask.giveChildren(names[-1])
 
             self.projDat['tasks'][taskName]=newTask
         
@@ -147,12 +151,12 @@ class projObj:
         elif isinstance(check, str) and check.endswith(self.taskValid[3]):
             if len(names)>1:
                 if not force:
-                    cli.getConfirmation('Are you sure you want to delete this subtask?')
+                    cliUtils.getConfirmation('Are you sure you want to delete this subtask?')
 
                 self.projDat['tasks'][names[0]].taskDat['children'].remove(names[-1])
-            elif self.projDat['tasks'][taskName]['children']:
+            elif 'children' in self.projDat['tasks'][taskName]:
                 if not force:
-                    cli.getConfirmation('Are you sure you want to delete this task and subtasks?')
+                    cliUtils.getConfirmation('Are you sure you want to delete this task and subtasks?')
 
                 children = self.projDat['tasks'][taskName].taskDat['children']
                 for i in children:
@@ -161,7 +165,7 @@ class projObj:
 
             else:
                 if not force:
-                    cli.getConfirmation('Are you sure you want to delete this task?')
+                    cliUtils.getConfirmation('Are you sure you want to delete this task?')
 
             del self.projDat['tasks'][taskName]
 

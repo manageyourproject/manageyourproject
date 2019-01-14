@@ -6,10 +6,12 @@ import os
 import math
 import click
 import shutil
+import textwrap
 import datetime as dt
 from colorama import Fore, Back, Style
 
 from myp import main
+from myp.scripts import cliUtils
 
 @click.group(invoke_without_command=True)
 @click.version_option()
@@ -174,37 +176,45 @@ def task(ctxObjs,projname):
     colAlt = False
     termWidth, _ = click.get_terminal_size()
     cellWidth=int(math.floor(termWidth/len(proj.projDat['currentformat']))-2)
-    cellWide=int(math.floor(termWidth/len(proj.projDat['currentformat']))-\
+    cellWide= int(math.floor(termWidth/len(proj.projDat['currentformat']))-\
                  2+(0.5*cellWidth))
-    cellThin=int(math.floor(termWidth/(len(proj.projDat['currentformat'])))-\
+    cellThin= int(math.floor(termWidth/(len(proj.projDat['currentformat'])))-\
                  2-(0.5*cellWidth))
+
     listDict={}
-    listHead = ''
+    listHead = []
     for i in proj.projDat['currentformat']:
         if i == 'Total Time':
-            listHead = listHead + '| ' + '{i:<{width}}'.format(\
-                    i=i, width=cellThin)
+            listHead.append({'lead':'| ',
+                             'width':cellThin,
+                             'text':i,
+                             })
         elif i == 'Task Name':
-            listHead = listHead + '| ' + '{i:<{width}}'.format(\
-                    i=i, width=cellWide)
+            listHead.append({'lead':'| ',
+                             'width':cellWide,
+                             'text':i,
+                             })
         else:
-            listHead = listHead + '| ' + '{i:<{width}}'.format(\
-                    i=i, width=cellWidth)
+            listHead.append({'lead':'| ',
+                             'width':cellWidth,
+                             'text':i,
+                             })
 
     click.echo(Fore.WHITE+Back.BLACK+click.style(\
             '{:{width}}'.format('-'*termWidth,\
             width=termWidth),bold=True, reverse=colAlt))
-    click.echo(Fore.WHITE+Back.BLACK+click.style(listHead,\
+    click.echo(Fore.WHITE+Back.BLACK+click.style(\
+            cliUtils.formatPrint(termWidth, listHead),\
             bold=True, reverse=colAlt))
     click.echo(Fore.WHITE+Back.BLACK+click.style(\
             '{:{width}}'.format('-'*termWidth,\
             width=termWidth),bold=True, reverse=colAlt))
     colAlt = not colAlt
     for key, value in proj.projDat['tasks'].items():
-        listVals = ''
+        listVals = []
         if not value.status() == 'finished':
             for i, j in proj.projDat['currentformat'].items():
-                listVals = listVals+'| '
+                # listVals = listVals+'| '
                 if j == 'name':
                     listDictKey = key
                     field = key
@@ -240,28 +250,30 @@ def task(ctxObjs,projname):
                         assignees = assignees + k
                     field = assignees
 
-                if j == 'name' and 'parent' in value.taskDat:
-                    field = field.split('.')[-1]
-                    listVals = listVals + '  ' + '{i:<{width}}'.format(\
-                            i=field, width=cellWide-2, prec=3)
-                elif type(field) is float:
-                    listVals = listVals + '{i:<{width}}'.format(\
-                            i=field, width=cellWidth, prec=3)
-                elif type(field) is int:
-                    listVals = listVals + '{i:<{width}}'.format(\
-                            i=field, width=cellWidth, prec=2)
-                else:
-                    if j == 'timeSpent':
-                        listVals = listVals + '{i:<{width}}'.format(\
-                                i=field, width=cellThin)
-                    elif j == 'name':
-                        listVals = listVals + '{i:<{width}}'.format(\
-                                i=field, width=cellWide)
+                if j == 'timeSpent':
+                    listVals.append({'lead':'| ',
+                                     'width':cellThin,
+                                     'text':field,
+                                     })
+                elif j == 'name':
+                    if 'parent' in value.taskDat:
+                        field = field.split('.')[-1]
+                        listVals.append({'lead':'|   ',
+                                         'width':cellWide-2,
+                                         'text':field,
+                                         })
                     else:
-                        listVals = listVals + '{i:<{width}}'.format(\
-                                i=field, width=cellWidth)
+                        listVals.append({'lead':'| ',
+                                         'width':cellWide,
+                                         'text':field,
+                                         })
+                else:
+                    listVals.append({'lead':'| ',
+                                     'width':cellWidth,
+                                     'text':field,
+                                     })
 
-            listDict[listDictKey]=listVals
+            listDict[listDictKey]=cliUtils.formatPrint(termWidth, listVals)
 
     for key, value in sorted(listDict.items()):
         click.echo(Fore.WHITE+Back.BLACK+click.style(\
@@ -518,18 +530,6 @@ def kanban(confObj):
 @click.pass_obj
 def burndown(confObj):
     pass
-
-def printToCli(message):
-    click.echo(message)
-
-def getInput(message, inputType=str, *args, **kwargs):
-    return click.prompt(message, type=inputType)
-
-def getConfirmation(message, abort=True, *args, **kwargs):
-    return click.confirm(message, abort=abort)
-
-def showError(message):
-    raise click.ClickException(message)
 
 if __name__ == '__main__':
     cli()

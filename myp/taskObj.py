@@ -2,7 +2,7 @@ import os
 import shutil
 import datetime
 
-from myp.scripts import cli
+from myp.scripts import cliUtils
 
 class taskObj:
     def __init__(self, taskName, assignee=None, assigneeDeet=None,\
@@ -10,6 +10,7 @@ class taskObj:
         self.name=taskName
         self.taskDat={
             'name':'',
+            'description':'',
             'contributesto':[],
             'depends':[],
             'datecreated':'',
@@ -56,7 +57,7 @@ class taskObj:
         if 'children' in self.taskDat:
             del self.taskDat['children']
 
-    def giveChild(self, childName):
+    def giveChildren(self, childName):
         if not 'children' in self.taskDat:
             chil = {'children':[childName]}
             self.taskDat.update(chil)
@@ -68,7 +69,7 @@ class taskObj:
 
     def startTask(self):
         if self.taskDat['status'] == 'finished':
-            cli.getConfirmation('That task is already finished.\n would you like to restart it?')
+            cliUtils.getConfirmation('That task is already finished.\n would you like to restart it?')
             self.taskDat['status'] = 'in-progress'
         elif self.taskDat['started']:
             return 'Task already running'
@@ -107,7 +108,7 @@ class taskObj:
             else: 
                 self.stopTask(confObj)
 
-        if self.taskDat['children']:
+        if 'children' in self.taskDat:
             for i in self.taskDat['children']:
                 projObj.projDat['.'.join([taskName,i])].finishTask(projObj, confObj)
 

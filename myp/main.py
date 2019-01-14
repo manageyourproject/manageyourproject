@@ -1,7 +1,6 @@
 import os
 import sys
 import math
-import click
 import shutil
 import datetime
 
@@ -11,6 +10,7 @@ from myp import confObj
 from myp import projObj
 from myp import taskObj
 from myp.scripts import cli
+from myp.scripts import cliUtils
 from myp.utilities import datIO
 
 def initConf(cfg):
@@ -25,10 +25,10 @@ def initConf(cfg):
     return conf
 
 def getUserInfo():
-    cli.printToCli('No config file found.')
-    cli.getConfirmation('Would you like to create one?')
-    name = cli.getInput('Name:')
-    email = cli.getInput('Email:')
+    cliUtils.printToCli('No config file found.')
+    cliUtils.getConfirmation('Would you like to create one?')
+    name = cliUtils.getInput('Name:')
+    email = cliUtils.getInput('Email:')
     return [name, email]
 
 def writeConf(confObj):
@@ -59,7 +59,7 @@ def makeProj(confObj, projName, storeType, storeLoc, force=False,\
         return check
     
     elif check.endswith(confObj.projValid[3]):
-        if not force and cli.getConfirmation(check+\
+        if not force and cliUtils.getConfirmation(check+\
                 '\nWould you like to overwrite it?'):
             deleteProj(projName)
         elif force:
@@ -78,7 +78,7 @@ def makeProj(confObj, projName, storeType, storeLoc, force=False,\
         check = confObj.projCheck(names[0])
         if check.endswith(confObj.projValid[2]):
             if not force:
-                cli.getConfirmation('Parent ' + check + '\nWould you like to create it?')
+                cliUtils.getConfirmation('Parent ' + check + '\nWould you like to create it?')
 
             createdProj.giveParent(names[0])
             parProj = confObj.addProj(names[0], storeType=StoreType,\
@@ -167,16 +167,16 @@ def deleteProj(confObj, projName, storeType=None, storeLoc=None):
         return parProj
 
     if len(names)>1:
-        if click.confirm('Are you sure you want to'+\
-                ' delete this subproject', abort=True):
+        if cliUtils.getConfirmation('Are you sure you want to'+\
+                ' delete this subproject'):
 
             os.remove(projFile)
             parProj.projDat['children'].remove(names[-1])
             writeProj(parProj)
 
-    elif click.confirm('Are you sure you want to'+\
+    elif cliUtils.getConfirmation('Are you sure you want to'+\
             ' delete this project, its folder,'+\
-            ' and contents?', abort=True):
+            ' and contents?'):
         
         childList = parProj.projDat['children']
         shutil.rmtree(storeLoc)
@@ -198,20 +198,20 @@ def copyTask(confObj, projObj, taskName, newProjObj=None, newTaskName=None, *arg
     if newtaskproj:
         newproj = main.loadProj(ctxObjs['confObj'],newtaskproj)
         if isinstance(newproj, str):
-            raise click.ClickException(proj)
+            return proj
 
         output = main.makeTask(newproj, newtaskname, None, task)
         if isinstance(output, str):
-            raise click.ClickException(output)
+            return output
     else:
         output = main.makeTask(proj, newtaskname, None, task)
         if isinstance(output, str):
-            raise click.ClickException(output)
+            return output
 
     if deleteold:
         output = deleteTask(proj, taskname)
         if isinstance(output, str):
-            raise click.ClickException(output)
+            return output
 
 def updateFiles(confObj, projName=None, *args, **kwargs):
     if not projName:
@@ -220,7 +220,7 @@ def updateFiles(confObj, projName=None, *args, **kwargs):
             if isinstance(proj, str):
                 return proj
 
-            cli.printToCli('Updating project: ' + key)
+            cliUtils.printToCli('Updating project: ' + key)
             for key, value in proj.projDat['tasks'].items():
                 if 'children' in value.taskDat and not value.taskDat['children']:
                     del value.taskDat['children']
