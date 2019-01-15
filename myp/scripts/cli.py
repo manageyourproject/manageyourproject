@@ -530,6 +530,3 @@ def kanban(confObj):
 @click.pass_obj
 def burndown(confObj):
     pass
-
-if __name__ == '__main__':
-    cli()
