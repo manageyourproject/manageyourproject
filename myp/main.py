@@ -87,7 +87,7 @@ def makeProj(confObj, projName, storeType, storeLoc, force=False,\
                 return parProj
 
         elif check.endswith(confObj.projValid[3]):
-            parProj = confObj.loadProj(names[0])
+            parProj = loadProj(confObj, names[0])
 
         else:
             return check
@@ -101,7 +101,7 @@ def makeProj(confObj, projName, storeType, storeLoc, force=False,\
     return createdProj
 
 def writeProj(projObj):
-    projDat, projFile = projObj.dumpProj()
+    projDat, projFile = projObj.dumpDat()
     datIO.yamlWrite(projDat, projFile)
 
 def loadProj(confObj, projName, storeType=None, storeLoc=None):
@@ -121,6 +121,7 @@ def loadProj(confObj, projName, storeType=None, storeLoc=None):
         return check
 
     loadedProj = projObj.projObj(projName, projFile, dat=datIO.yamlRead(projFile))
+    loadedProj.loadDat()
     return loadedProj
 
 def copyProj(confObj, projName, newProjName, deleteold):
@@ -141,7 +142,7 @@ def copyProj(confObj, projName, newProjName, deleteold):
         if isinstance(output, str):
             return output
 
-    output = makeProj(confObj, newProjName, storeType, storeLoc, None, dat=proj.dumpProj()[0])
+    output = makeProj(confObj, newProjName, storeType, storeLoc, None, dat=proj.dumpDat()[0])
     if isinstance(output, str):
         return output
 
@@ -196,15 +197,15 @@ def copyTask(confObj, projObj, taskName, newProjObj=None, newTaskName=None, *arg
         newtaskname = taskname
 
     if newtaskproj:
-        newproj = main.loadProj(ctxObjs['confObj'],newtaskproj)
+        newproj = loadProj(ctxObjs['confObj'],newtaskproj)
         if isinstance(newproj, str):
             return proj
 
-        output = main.makeTask(newproj, newtaskname, None, task)
+        output = makeTask(newproj, newtaskname, None, task)
         if isinstance(output, str):
             return output
     else:
-        output = main.makeTask(proj, newtaskname, None, task)
+        output = makeTask(proj, newtaskname, None, task)
         if isinstance(output, str):
             return output
 
@@ -254,7 +255,7 @@ def promote(confObj, newProjName, parProj, taskObj):
     if isinstance(newProj, str):
         return newProj
 
-    taskDat = taskObj.dumpTask()
+    taskDat = taskObj.dumpDat()
     for key, value in taskDat.items():
         if (key in newProj.projDat\
                 and not key == 'parent'\

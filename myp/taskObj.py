@@ -37,7 +37,7 @@ class taskObj:
         if not taskDat and assignee:
             self.newTask(assignee, dict(assigneeDeet))
         else:
-            self.taskDat.update(dict(taskDat))
+            self.update(dict(taskDat))
             self.taskDat['name']=taskName
 
     def newTask(self, assignee, assigneeDeet):
@@ -48,8 +48,11 @@ class taskObj:
             now(datetime.timezone.utc).isoformat()
         self.taskDat.update(taskDat)
 
-    def dumpTask(self):
+    def dumpDat(self):
         return self.taskDat
+
+    def update(self, dat):
+        self.taskDat.update(dat)
 
     def giveParent(self, parName):
         par = {'parent': parName}

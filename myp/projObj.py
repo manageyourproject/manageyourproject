@@ -40,12 +40,12 @@ class projObj:
             }
         }
         if not dat and confObj:
-            self.newProj(confObj)
+            self.newProj(confObj, projName)
         elif dat:
-            self.loadProj(dict(dat))
+            self.loadDat(dict(dat))
             self.projDat['name']=projName
 
-    def newProj(self, confObj):
+    def newProj(self, confObj, projName):
         projDat={
             'name':'',
             'creator':'',
@@ -62,18 +62,24 @@ class projObj:
                 }
         self.projDat.update(projDat)
         
-    def dumpProj(self):
+    def dumpDat(self):
         datDump = self.projDat
         for key, value in datDump['tasks'].items():
-            datDump['tasks'][key]=value.dumpTask()
+            datDump['tasks'][key]=value.dumpDat()
 
         return [datDump, self.projFile]
 
-    def loadProj(self, dat):
-        self.projDat.update(dat)
+    def loadDat(self, dat=None, *args, **kwargs):
+        if dat:
+            self.projDat.update(dat)
         for key, value in self.projDat['tasks'].items():
             self.projDat['tasks'][key]=taskObj.taskObj(taskName=key, taskDat=value)
 
+    def update(self, dat):
+        self.projDat.update(dat)
+        self.loadDat()
+
+    
     def giveParent(self, parName):
         par = {'parent': parName}
         self.projDat.update(par)
@@ -143,7 +149,7 @@ class projObj:
     def deleteTask(self, taskName, force=None):
         names = taskName.split('.')
         check = self.taskCheck(taskName)
-        task = self.loadTask(taskName).dumpTask()
+        task = self.loadTask(taskName).dumpDat()
         if isinstance(check, str) and (check.endswith(self.taskValid[0]) or\
                                        check.endswith(self.taskValid[1]) or\
                                        check.endswith(self.taskValid[2])):
@@ -154,7 +160,7 @@ class projObj:
                 if not force:
                     cliUtils.getConfirmation('Are you sure you want to delete this subtask?')
 
-                parTask = self.loadTask(names[0]).dumpTask()
+                parTask = self.loadTask(names[0]).dumpDat()
                 parTask['children'].remove(names[-1])
                 if not parTask['children']:
                     del parTask['children']
