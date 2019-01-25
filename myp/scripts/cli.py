@@ -28,6 +28,121 @@ def cli(ctx):
         click.echo(main.getActive(ctx.obj['confObj']))
         click.echo('Type '+click.style('myp --help',\
                 fg='red',bold=True)+' for usage')
+        projname = ctx.obj['confObj'].confDat['session']['active']
+        if not projname:
+            return
+
+        proj = main.loadProj(ctxObjs['confObj'],projname)
+        if isinstance(proj, str):
+            raise click.ClickException(proj)
+
+        colAlt = False
+        termWidth, _ = click.get_terminal_size()
+        cellWidth=int(math.floor(termWidth/len(proj.projDat['currentformat']))-2)
+        cellWide= int(math.floor(termWidth/len(proj.projDat['currentformat']))-\
+                     2+(0.5*cellWidth))
+        cellThin= int(math.floor(termWidth/(len(proj.projDat['currentformat'])))-\
+                     2-(0.5*cellWidth))
+
+        listDict={}
+        listHead = []
+        for i in proj.projDat['currentformat']:
+            if i == 'Total Time':
+                listHead.append({'lead':'| ',
+                                 'width':cellThin,
+                                 'text':i,
+                                 })
+            elif i == 'Task Name':
+                listHead.append({'lead':'| ',
+                                 'width':cellWide,
+                                 'text':i,
+                                 })
+            else:
+                listHead.append({'lead':'| ',
+                                 'width':cellWidth,
+                                 'text':i,
+                                 })
+
+        click.echo(Fore.WHITE+Back.BLACK+click.style(\
+                '{:{width}}'.format('-'*termWidth,\
+                width=termWidth),bold=True, reverse=colAlt))
+        click.echo(Fore.WHITE+Back.BLACK+click.style(\
+                cliUtils.formatPrint(termWidth, listHead),\
+                bold=True, reverse=colAlt))
+        click.echo(Fore.WHITE+Back.BLACK+click.style(\
+                '{:{width}}'.format('-'*termWidth,\
+                width=termWidth),bold=True, reverse=colAlt))
+        colAlt = not colAlt
+        for key, value in proj.projDat['tasks'].items():
+            listVals = []
+            if not value.status() == 'finished':
+                for i, j in proj.projDat['currentformat'].items():
+                    # listVals = listVals+'| '
+                    if j == 'name':
+                        listDictKey = key
+                        field = key
+                    else:
+                        field = value.taskDat[j]
+
+                    if j == 'datecreated':
+                        field = dt.datetime.fromisoformat(field).\
+                                strftime('%Y/%m/%d')
+                    elif j == 'timeSpent':
+                        timeraw = float(field)
+                        if timeraw > 60 and timeraw < 60*60:
+                            timemin = math.floor(timeraw/60)
+                            timesec = timeraw%60
+                            field = str(timemin)+'m '+str(timesec)+'s'
+                        elif timeraw > 60*60 and timeraw < 24*60*60:
+                            timehour = math.floor(timeraw/(60*60))
+                            timemin = math.floor((timeraw-(timehour*(60*60)))/60)
+                            timesec = timeraw%60
+                            field = str(timehour)+'h '+str(timemin)+'m'
+                        elif timeraw > 24*60*60:
+                            timeday = math.floor(timeraw/(24*60*60))
+                            timehour = math.floor((timeraw-(timeday*(24*60*60)))/(60*60))
+                            timemin = math.floor((timeraw-(timehour*(60*60))-\
+                                                  (timeday*(24*60*60)))/60)
+                            timesec = timeraw%60
+                            field = str(timeday)+'d '+str(timehour)+'h'
+                        else:
+                            field = str(timeraw)+'s'
+                    elif j == 'assignee':
+                        assignees = ''
+                        for k in dict(value.taskDat[j]).keys():
+                            assignees = assignees + k
+                        field = assignees
+
+                    if j == 'timeSpent':
+                        listVals.append({'lead':'| ',
+                                         'width':cellThin,
+                                         'text':field,
+                                         })
+                    elif j == 'name':
+                        if 'parent' in value.taskDat:
+                            field = field.split('.')[-1]
+                            listVals.append({'lead':'|   ',
+                                             'width':cellWide-2,
+                                             'text':field,
+                                             })
+                        else:
+                            listVals.append({'lead':'| ',
+                                             'width':cellWide,
+                                             'text':field,
+                                             })
+                    else:
+                        listVals.append({'lead':'| ',
+                                         'width':cellWidth,
+                                         'text':field,
+                                         })
+
+                listDict[listDictKey]=cliUtils.formatPrint(termWidth, listVals)
+
+        for key, value in sorted(listDict.items()):
+            click.echo(Fore.WHITE+Back.BLACK+click.style(\
+                    value, reverse=colAlt))
+
+            colAlt = not colAlt
 
 @cli.command(help=\
         'Get currently active project, or activate a project')
