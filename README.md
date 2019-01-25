@@ -14,7 +14,12 @@ myp requires python 3.7 to run, and manages dependancies using pip. The master b
 pip3 install --user git+https://github.com/manageyourproject/manageyourproject@master
 ```
 
-This will install myp from the master branch on github. This is recommended because the master branch shoudl be stable. 
+This will install myp from the master branch on github. This is recommended because the master branch should be stable. 
+
+Myp can then be upgraded using the command:
+```
+pip3 install --user --upgrade git+https://github.com/manageyourproject/manageyourproject@master
+```
 
 NOTE: myp has only been tested with python 3 on a unix system. It is unknown if it will work on a windows machine, and suspected that it will not work with python <3.7
 
