@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
         name='myp',
-        version='0.1.1',
+        version='0.1.2',
         author='Aaron English',
         author_email='manageyourproject@protonmail.com',
         license='GNU GPL-3',
