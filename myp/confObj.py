@@ -68,8 +68,8 @@ class confObj:
         return [self.confDat, self.cfgFile]
 
     def addProj(self, projObj, storeType, storeLoc, *args, **kwargs):
-        storeType = projObj.projDat['storeType']
-        storeLoc = projObj.projDat['storeLoc']
+        storeType = storeType
+        storeLoc = storeLoc
         self.confDat['session']['projs'][projObj.name]={
             'storeType':storeType,
             'storeLoc':storeLoc,
