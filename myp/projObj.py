@@ -175,23 +175,16 @@ class projObj:
                         
                 newTask.giveParent(names[0])
                 parTask.giveChildren(names[-1])
+                self.addTaskDepCon(parTask)
 
             else:
-                if dependson:
-                    newTask.addDepends(dependson)
-                else:
-                    newTask.addDepends('start')
-
-                if contributesto:
-                    newTask.addContributes(contributesto)
-                else:
-                    newTask.addContributes('finish')
+                self.addTaskDepCon(newTask)
 
             self.projDat['tasks'][taskName]=newTask
         
         return newTask
 
-    def addTaskDepCon(self, taskObj, mileName, dependson=None,\
+    def addTaskDepCon(self, taskObj, dependson=None,\
                       contributesto=None, *args, **kwargs):
         if dependson:
             depTask = self.loadTask(dependson)
