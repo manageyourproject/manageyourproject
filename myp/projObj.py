@@ -66,6 +66,8 @@ class projObj:
                 'contact': confObj.confDat['user']['email'],
                 'cost': confObj.confDat['user']['cost'],
                 }
+        self.addMilestone('start')
+        self.addMilestone('finish')
         self.update(projDat)
         
     def dumpDat(self):
@@ -135,7 +137,7 @@ class projObj:
 
         self.projDat['milestones'][mileName]=newMile
 
-    def addTask(self, taskName, assignee=None, dat=None, force=None, *args, **kwargs):
+    def addTask(self, taskName, assignee=None, dat=None, force=None, dependson=None, contributesto=None,  *args, **kwargs):
         names = taskName.split('.')
         check = self.taskCheck(taskName)
         if isinstance(check, str) and (check.endswith(self.taskValid[0]) or\
@@ -172,6 +174,26 @@ class projObj:
                         
                 newTask.giveParent(names[0])
                 parTask.giveChildren(names[-1])
+                if dependson:
+                    parTask.addDepends(dependson)
+                else:
+                    parTask.addDepends('start')
+
+                if contributesto:
+                    parTask.addContributes(contributesto)
+                else:
+                    parTask.addContributes('finish')
+
+            else:
+                if dependson:
+                    newTask.addDepends(dependson)
+                else:
+                    newTask.addDepends('start')
+
+                if contributesto:
+                    newTask.addContributes(contributesto)
+                else:
+                    newTask.addContributes('finish')
 
             self.projDat['tasks'][taskName]=newTask
         
