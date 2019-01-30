@@ -21,7 +21,7 @@ class mileObj:
             self.newMile()
         else:
             self.update(mileDat)
-            self.taskDat['name']=taskName
+            self.mileDat['name']=mileName
 
     def newMile(self):
         mileDat = {'name':self.name}
