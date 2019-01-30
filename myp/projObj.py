@@ -83,11 +83,11 @@ class projObj:
             self.update(dat)
 
         for key, value in self.projDat['milestones'].items():
-            if not isinstance(value, mileObj):
+            if not isinstance(value, mileObj.mileObj):
                 self.projDat['milestones'][key]=mileObj.mileObj(mileName=key, mileDat=value)
 
         for key, value in self.projDat['tasks'].items():
-            if not isinstance(value, taskObj):
+            if not isinstance(value, taskObj.taskObj):
                 self.projDat['tasks'][key]=taskObj.taskObj(taskName=key, taskDat=value)
 
     def update(self, dat):
