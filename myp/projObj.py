@@ -201,7 +201,7 @@ class projObj:
                                            self.mileValid[1] in depMile):
                 return depMile
 
-            taskObj.addDepends('start')
+            taskObj.addDepends(depMile.name)
             depMile.addContributes(taskObj.name)
 
         if contributesto:
@@ -219,7 +219,7 @@ class projObj:
                                            self.mileValid[1] in conMile):
                 return conMile
 
-            taskObj.addContributes('finish')
+            taskObj.addContributes(conMile.name)
             conMile.addDepends(taskObj.name)
 
     def loadTask(self, taskName):
