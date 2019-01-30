@@ -198,8 +198,7 @@ class projObj:
         else:
             depMile = self.loadMilestone('start')
             if isinstance(depMile, str) and ((self.mileValid[0] in depMile) or\
-                                           self.mileValid[1] in depMile or\
-                                           self.mileValid[2] in depMile):
+                                           self.mileValid[1] in depMile:
                 return depMile
 
             taskObj.addDepends('start')
@@ -217,8 +216,7 @@ class projObj:
         else:
             conMile = self.loadMilestone('finish')
             if isinstance(conMile, str) and ((self.mileValid[0] in conMile) or\
-                                           self.mileValid[1] in conMile or\
-                                           self.mileValid[2] in conMile):
+                                           self.mileValid[1] in conMile:
                 return conMile
 
             taskObj.addContributes('finish')
