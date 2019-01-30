@@ -118,18 +118,11 @@ class projObj:
 
     def addMilestone(self, mileName, depends=None, contributes=None, *args, **kwargs):
         check = self.mileCheck(mileName)
-        if isinstance(check, str) and (self.mileValid[0] in check):
+        if isinstance(check, str) and (self.mileValid[0] in check) or\
+                (self.mileValid[2] in check):
             return check
-        elif isinstance(check, str) and check.endswith(self.taskValid[3]):
-            if self.projDat['tasks'][taskName].status() == 'finished':
-                if not dat:
-                    cli.getConfirmation('A finished task by that name already exists\n'+\
-                        'would you like to restart it?')
-                    self.projDat['tasks'][taskName].status('in-progress')
-            else:
-                return check
         else:
-        newMile = mileObj.mileObj(mileName)
+            newMile = mileObj.mileObj(mileName)
         if depends:
             newMile.addDepends(depends)
         
