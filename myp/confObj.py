@@ -60,6 +60,7 @@ class confObj:
         confDat['user']['name'] = name
         confDat['user']['email'] = email
         confDat['session']['defaultprojpath']=self.cfgProj
+        self.confDat = dict(self.confDat)
         self.confDat.update(confDat)
 
     def dumpDat(self):
