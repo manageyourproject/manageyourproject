@@ -3,6 +3,7 @@ import shutil
 import datetime
 
 from myp.scripts import cliUtils
+from myp.utilities import dictUpdate as du
 
 class mileObj:
     def __init__(self, mileName, mileDat=None, *args, **kwargs):
@@ -19,18 +20,18 @@ class mileObj:
         if not mileDat:
             self.newMile()
         else:
-            self.update(dict(mileDat))
+            self.update(mileDat)
             self.taskDat['name']=taskName
 
     def newTask(self):
         mileDat = {'name':self.name}
-        self.mileDat.update(mileDat)
+        self.update(mileDat)
 
     def dumpDat(self):
         return self.mileDat
 
     def update(self, dat):
-        self.mileDat.update(dat)
+        self.mileDat.update(du.update(self.mileDat, dat))
 
     def addDepends(self, depends):
         if not isinstance(depends, list):

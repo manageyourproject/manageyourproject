@@ -4,6 +4,7 @@ import textwrap
 
 from colorama import Fore, Back, Style
 from myp.utilities import datIO
+from myp.utilities import dictUpdate as du
 
 def printToCli(message):
     click.echo(message)

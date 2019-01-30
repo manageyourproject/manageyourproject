@@ -12,6 +12,7 @@ from myp import taskObj
 from myp.scripts import cli
 from myp.scripts import cliUtils
 from myp.utilities import datIO
+from myp.utilities import dictUpdate as du
 
 def initConf(cfg):
     cfgFile = os.path.join(cfg, 'config.yaml')           # default file location

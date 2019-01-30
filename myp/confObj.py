@@ -13,6 +13,8 @@
 import os
 import sys
 
+from myp.utilities import dictUpdate as du
+
 class confObj:
     def __init__(self, cfg, name=None, email=None, dat=None, *args,**kwargs):
         self.projValid = [\
@@ -45,7 +47,7 @@ class confObj:
         if not dat and name and email:
             self.newConf(name, email)
         elif dat:
-            self.confDat.update(dat)
+            self.confDat.update(du.update(self.confDat, dat))
 
     def newConf(self, name, email):
         confDat = {
@@ -60,8 +62,7 @@ class confObj:
         confDat['user']['name'] = name
         confDat['user']['email'] = email
         confDat['session']['defaultprojpath']=self.cfgProj
-        self.confDat = dict(self.confDat)
-        self.confDat.update(confDat)
+        self.confDat.update(du.update(self.confDat, confDat))
 
     def dumpDat(self):
         return [self.confDat, self.cfgFile]

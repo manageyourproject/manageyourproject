@@ -7,6 +7,7 @@ import datetime
 
 from myp import taskObj
 from myp.scripts import cliUtils
+from myp.utilities import dictUpdate as du
 
 class projObj:
     def __init__(self, projName, projFile, confObj=None, dat=None, *args, **kwargs):
@@ -65,7 +66,7 @@ class projObj:
                 'contact': confObj.confDat['user']['email'],
                 'cost': confObj.confDat['user']['cost'],
                 }
-        self.projDat.update(projDat)
+        self.update(projDat)
         
     def dumpDat(self):
         datDump = self.projDat
@@ -79,28 +80,30 @@ class projObj:
 
     def loadDat(self, dat=None, *args, **kwargs):
         if dat:
-            self.projDat.update(dat)
+            self.update(dat)
 
         for key, value in self.projDat['milestones'].items():
-            self.projDat['milestones'][key]=taskObj.taskObj(mileName=key, mileDat=value)
+            if not isinstance(value, mileObj):
+                self.projDat['milestones'][key]=mileObj.mileObj(mileName=key, mileDat=value)
 
         for key, value in self.projDat['tasks'].items():
-            self.projDat['tasks'][key]=taskObj.taskObj(taskName=key, taskDat=value)
+            if not isinstance(value, taskObj):
+                self.projDat['tasks'][key]=taskObj.taskObj(taskName=key, taskDat=value)
 
     def update(self, dat):
-        self.projDat.update(dat)
+        self.projDat.update(du.update(self.projDat, dat))
         self.loadDat()
     
     def giveParent(self, parName):
         par = {'parent': parName}
-        self.projDat.update(par)
+        self.update(par)
         if 'children' in self.projDat:
             del self.projDat['children']
 
     def giveChild(self, childName):
         if not 'children' in self.projDat:
             chil = {'children':[childName]}
-            self.projDat.update(chil)
+            self.update(chil)
         else:
             self.projDat['children'].append(childName)
 
