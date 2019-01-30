@@ -196,7 +196,7 @@ class projObj:
             taskObj.addDepends(dependson)
             depTask.addContributes(taskObj.name)
         else:
-            depMile = self.loadMile('start')
+            depMile = self.loadMilestone('start')
             if isinstance(check, str) and (check.endswith(self.taskValid[0]) or\
                                            check.endswith(self.taskValid[1]) or\
                                            check.endswith(self.taskValid[2])):
@@ -215,7 +215,7 @@ class projObj:
             taskObj.addContributes(contributesto)
             conTask.addDepends(taskObj.name)
         else:
-            conMile = self.loadMile('finish')
+            conMile = self.loadMilestone('finish')
             if isinstance(check, str) and (check.endswith(self.taskValid[0]) or\
                                            check.endswith(self.taskValid[1]) or\
                                            check.endswith(self.taskValid[2])):
