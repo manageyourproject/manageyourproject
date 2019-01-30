@@ -23,7 +23,7 @@ class mileObj:
             self.update(mileDat)
             self.taskDat['name']=taskName
 
-    def newTask(self):
+    def newMile(self):
         mileDat = {'name':self.name}
         self.update(mileDat)
 
