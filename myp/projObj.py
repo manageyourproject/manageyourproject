@@ -174,15 +174,6 @@ class projObj:
                         
                 newTask.giveParent(names[0])
                 parTask.giveChildren(names[-1])
-                if dependson:
-                    parTask.addDepends(dependson)
-                else:
-                    parTask.addDepends('start')
-
-                if contributesto:
-                    parTask.addContributes(contributesto)
-                else:
-                    parTask.addContributes('finish')
 
             else:
                 if dependson:
@@ -199,6 +190,46 @@ class projObj:
         
         return newTask
 
+    def addTaskDepCon(self, taskObj, mileName, dependson=None,\
+                      contributesto=None, *args, **kwargs):
+        if dependson:
+            depTask = self.loadTask(dependson)
+            if isinstance(check, str) and (check.endswith(self.taskValid[0]) or\
+                                           check.endswith(self.taskValid[1]) or\
+                                           check.endswith(self.taskValid[2])):
+                return check
+
+            taskObj.addDepends(dependson)
+            depTask.addContributes(taskObj.name)
+        else:
+            depMile = self.loadMile('start')
+            if isinstance(check, str) and (check.endswith(self.taskValid[0]) or\
+                                           check.endswith(self.taskValid[1]) or\
+                                           check.endswith(self.taskValid[2])):
+                return check
+
+            taskObj.addDepends('start')
+            depMile.addContributes(taskObj.name)
+
+        if contributesto:
+            conTask = self.loadTask(contributesto)
+            if isinstance(conTask, str) and (self.taskValid[0] in conTask or\
+                                           self.taskValid[1] in conTask or\
+                                           self.taskValid[2] in conTask):
+                return conTask
+
+            taskObj.addContributes(contributesto)
+            conTask.addDepends(taskObj.name)
+        else:
+            conMile = self.loadMile('finish')
+            if isinstance(check, str) and (check.endswith(self.taskValid[0]) or\
+                                           check.endswith(self.taskValid[1]) or\
+                                           check.endswith(self.taskValid[2])):
+                return check
+
+            taskObj.addContributes('finish')
+            conMile.addDepends(taskObj.name)
+
     def loadTask(self, taskName):
         names = taskName.split('.')
         check = self.taskCheck(taskName)
@@ -209,6 +240,17 @@ class projObj:
 
         elif isinstance(check, str) and check.endswith(self.taskValid[3]):
             return self.projDat['tasks'][taskName]
+
+    def loadMilestone(self, mileName):
+        names = mileName.split('.')
+        check = self.mileCheck(mileName)
+        if isinstance(check, str) and (check.endswith(self.mileValid[0]) or\
+                                       check.endswith(self.mileValid[1]) or\
+                                       check.endswith(self.mileValid[2])):
+            return check
+
+        elif isinstance(check, str) and check.endswith(self.mileValid[3]):
+            return self.projDat['milestones'][mileName]
 
     def deleteTask(self, taskName, force=None):
         names = taskName.split('.')
