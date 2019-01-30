@@ -85,10 +85,12 @@ def makeProj(confObj, projName, storeType, storeLoc, force=False,\
                 cliUtils.getConfirmation('Parent ' + check + '\nWould you like to create it?')
 
             createdProj.giveParent(names[0])
-            parProj = confObj.addProj(names[0], storeType=StoreType,\
+            parProj = makeProj(names[0], storeType=StoreType,\
                                   storeLoc=storeLoc, force=force)
             if isinstance(parProj, str):
                 return parProj
+
+            confObj.addProj(parProj, storeType, storeLoc)
 
         elif check.endswith(confObj.projValid[3]):
             parProj = loadProj(confObj, names[0])
@@ -100,7 +102,7 @@ def makeProj(confObj, projName, storeType, storeLoc, force=False,\
         writeProj(parProj)
 
     writeProj(createdProj)
-    confObj.addProj(createdProj)
+    confObj.addProj(createdProj, storeType, storeLoc)
     writeConf(confObj)
     return createdProj
 
