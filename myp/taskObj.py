@@ -12,10 +12,11 @@ class taskObj:
             'name':'',
             'description':'',
             'contributesto':[],
-            'depends':[],
+            'dependson':[],
             'datecreated':'',
             'status':'in-progress',
             'started':'',
+            'parallelizeability':1,
             'timeSpent':0,
             'sessions':[],
             'assignee':{},
@@ -66,6 +67,18 @@ class taskObj:
             self.taskDat.update(chil)
         else:
             self.taskDat['children'].append(childName)
+
+    def addDepends(self, depends):
+        if not isinstance(depends, list):
+            depends = [depends]
+        for i in depends:
+            self.taskDat['dependson'].append(depends)
+
+    def addContributes(self, contributes):
+        if not isinstance(contributes, list):
+            contributes = [contributes]
+        for i in contributes:
+            self.taskDat['contributesto'].append(contributes)
 
     def status(self, newStatus=None, *args, **kwargs):
         return self.taskDat['status']

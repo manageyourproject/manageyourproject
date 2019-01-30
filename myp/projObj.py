@@ -17,12 +17,17 @@ class projObj:
                 ' does not exist',
                 ' already exists',
                 ]
+        self.mileValid = [\
+                'Milestones can\'t have children',
+                ' does not exist',
+                ' already exists',
+                ]
         self.projFile = projFile
         self.projDat = {
             'name':'',
             'creator':'',
             'description':'',
-            'depends':[],
+            'dependson':[],
             'contributesto':[],
             'datecreated':'',
             'team':{},
@@ -64,6 +69,9 @@ class projObj:
         
     def dumpDat(self):
         datDump = self.projDat
+        for key, value in datDump['milestones'].items():
+            datDump['milestones'][key]=value.dumpDat()
+
         for key, value in datDump['tasks'].items():
             datDump['tasks'][key]=value.dumpDat()
 
@@ -72,13 +80,16 @@ class projObj:
     def loadDat(self, dat=None, *args, **kwargs):
         if dat:
             self.projDat.update(dat)
+
+        for key, value in self.projDat['milestones'].items():
+            self.projDat['milestones'][key]=taskObj.taskObj(mileName=key, mileDat=value)
+
         for key, value in self.projDat['tasks'].items():
             self.projDat['tasks'][key]=taskObj.taskObj(taskName=key, taskDat=value)
 
     def update(self, dat):
         self.projDat.update(dat)
         self.loadDat()
-
     
     def giveParent(self, parName):
         par = {'parent': parName}
@@ -92,6 +103,40 @@ class projObj:
             self.projDat.update(chil)
         else:
             self.projDat['children'].append(childName)
+
+    def addDepends(self, depends):
+        if not isinstance(depends, list):
+            depends = [depends]
+        for i in depends:
+            self.projDat['dependson'].append(depends)
+
+    def addContributes(self, contributes):
+        if not isinstance(contributes, list):
+            contributes = [contributes]
+        for i in contributes:
+            self.projDat['contributesto'].append(contributes)
+
+    def addMilestone(self, mileName, depends=None, contributes=None, *args, **kwargs):
+        check = self.mileCheck(mileName)
+        if isinstance(check, str) and (self.mileValid[0] in check):
+            return check
+        elif isinstance(check, str) and check.endswith(self.taskValid[3]):
+            if self.projDat['tasks'][taskName].status() == 'finished':
+                if not dat:
+                    cli.getConfirmation('A finished task by that name already exists\n'+\
+                        'would you like to restart it?')
+                    self.projDat['tasks'][taskName].status('in-progress')
+            else:
+                return check
+        else:
+        newMile = mileObj.mileObj(mileName)
+        if depends:
+            newMile.addDepends(depends)
+        
+        if contributes:
+            newMile.addContributes(contributes)
+
+        self.projDat['milestones'][mileName]=newMile
 
     def addTask(self, taskName, assignee=None, dat=None, force=None, *args, **kwargs):
         names = taskName.split('.')
@@ -191,5 +236,17 @@ class projObj:
             outStr = 'Task ' + taskName + self.taskValid[2]
         else:
             outStr = 'Task ' + taskName + self.taskValid[3]
+
+        return outStr
+
+    def mileCheck(self, mileName):
+        names=mileName.split('.')
+        if len(names) > 1:
+            outStr = self.mileValid[0]
+
+        if not mileName in self.projDat['tasks']:
+            outStr = 'Milestone ' + mileName + self.mileValid[1]
+        else:
+            outStr = 'Milestone ' + mileName + self.mileValid[2]
 
         return outStr
