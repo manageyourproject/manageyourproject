@@ -188,19 +188,19 @@ class projObj:
                       contributesto=None, *args, **kwargs):
         if dependson:
             depTask = self.loadTask(dependson)
-            if isinstance(check, str) and (check.endswith(self.taskValid[0]) or\
-                                           check.endswith(self.taskValid[1]) or\
-                                           check.endswith(self.taskValid[2])):
-                return check
+            if isinstance(conTask, str) and (self.taskValid[0] in depTask or\
+                                           self.taskValid[1] in depTask or\
+                                           self.taskValid[2] in depTask):
+                return depTask
 
             taskObj.addDepends(dependson)
             depTask.addContributes(taskObj.name)
         else:
             depMile = self.loadMilestone('start')
-            if isinstance(check, str) and (check.endswith(self.taskValid[0]) or\
-                                           check.endswith(self.taskValid[1]) or\
-                                           check.endswith(self.taskValid[2])):
-                return check
+            if isinstance(depMile, str) and ((self.mileValid[0] in depMile) or\
+                                           self.mileValid[1] in depMile or\
+                                           self.mileValid[2] in depMile):
+                return depMile
 
             taskObj.addDepends('start')
             depMile.addContributes(taskObj.name)
@@ -216,10 +216,10 @@ class projObj:
             conTask.addDepends(taskObj.name)
         else:
             conMile = self.loadMilestone('finish')
-            if isinstance(check, str) and (check.endswith(self.taskValid[0]) or\
-                                           check.endswith(self.taskValid[1]) or\
-                                           check.endswith(self.taskValid[2])):
-                return check
+            if isinstance(conMile, str) and ((self.mileValid[0] in conMile) or\
+                                           self.mileValid[1] in conMile or\
+                                           self.mileValid[2] in conMile):
+                return conMile
 
             taskObj.addContributes('finish')
             conMile.addDepends(taskObj.name)
