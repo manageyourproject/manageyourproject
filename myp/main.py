@@ -17,7 +17,7 @@ def initConf(cfg):
     cfgFile = os.path.join(cfg, 'config.yaml')           # default file location
     if not os.path.isfile(cfgFile):
         if not os.path.exists(cfg):
-            os.makedir(cfg)
+            os.makedirs(cfg)
 
         name, email = getUserInfo()
         conf = confObj.confObj(cfg=cfg, name=name, email=email)

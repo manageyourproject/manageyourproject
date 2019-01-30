@@ -123,6 +123,7 @@ class projObj:
             return check
         else:
             newMile = mileObj.mileObj(mileName)
+
         if depends:
             newMile.addDepends(depends)
         
