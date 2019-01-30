@@ -240,7 +240,7 @@ class projObj:
                                        check.endswith(self.mileValid[1])):
             return check
 
-        elif isinstance(check, str) and check.endswith(self.mileValid[2]):
+        elif isinstance(check, str) and check.endswith(self.mileValid[3]):
             return self.projDat['milestones'][mileName]
 
     def deleteTask(self, taskName, force=None):
