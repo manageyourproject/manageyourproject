@@ -12,10 +12,14 @@ from myp import taskObj
 from myp.scripts import cli
 from myp.scripts import cliUtils
 from myp.utilities import datIO
+from myp.utilities import dictUpdate as du
 
 def initConf(cfg):
     cfgFile = os.path.join(cfg, 'config.yaml')           # default file location
     if not os.path.isfile(cfgFile):
+        if not os.path.exists(cfg):
+            os.makedirs(cfg)
+
         name, email = getUserInfo()
         conf = confObj.confObj(cfg=cfg, name=name, email=email)
         writeConf(conf)
@@ -81,13 +85,15 @@ def makeProj(confObj, projName, storeType, storeLoc, force=False,\
                 cliUtils.getConfirmation('Parent ' + check + '\nWould you like to create it?')
 
             createdProj.giveParent(names[0])
-            parProj = confObj.addProj(names[0], storeType=StoreType,\
+            parProj = makeProj(names[0], storeType=StoreType,\
                                   storeLoc=storeLoc, force=force)
             if isinstance(parProj, str):
                 return parProj
 
+            confObj.addProj(parProj, storeType, storeLoc)
+
         elif check.endswith(confObj.projValid[3]):
-            parProj = confObj.loadProj(names[0])
+            parProj = loadProj(confObj, names[0])
 
         else:
             return check
@@ -96,12 +102,12 @@ def makeProj(confObj, projName, storeType, storeLoc, force=False,\
         writeProj(parProj)
 
     writeProj(createdProj)
-    confObj.addProj(createdProj)
+    confObj.addProj(createdProj, storeType, storeLoc)
     writeConf(confObj)
     return createdProj
 
 def writeProj(projObj):
-    projDat, projFile = projObj.dumpProj()
+    projDat, projFile = projObj.dumpDat()
     datIO.yamlWrite(projDat, projFile)
 
 def loadProj(confObj, projName, storeType=None, storeLoc=None):
@@ -121,6 +127,7 @@ def loadProj(confObj, projName, storeType=None, storeLoc=None):
         return check
 
     loadedProj = projObj.projObj(projName, projFile, dat=datIO.yamlRead(projFile))
+    loadedProj.loadDat()
     return loadedProj
 
 def copyProj(confObj, projName, newProjName, deleteold):
@@ -141,7 +148,7 @@ def copyProj(confObj, projName, newProjName, deleteold):
         if isinstance(output, str):
             return output
 
-    output = makeProj(confObj, newProjName, storeType, storeLoc, None, dat=proj.dumpProj()[0])
+    output = makeProj(confObj, newProjName, storeType, storeLoc, None, dat=proj.dumpDat()[0])
     if isinstance(output, str):
         return output
 
@@ -178,7 +185,10 @@ def deleteProj(confObj, projName, storeType=None, storeLoc=None):
             ' delete this project, its folder,'+\
             ' and contents?'):
         
-        childList = parProj.projDat['children']
+        try:
+            childList = parProj.projDat['children']
+        except:
+            childList = []
         shutil.rmtree(storeLoc)
         if childList:
             for i in childList:
@@ -196,15 +206,15 @@ def copyTask(confObj, projObj, taskName, newProjObj=None, newTaskName=None, *arg
         newtaskname = taskname
 
     if newtaskproj:
-        newproj = main.loadProj(ctxObjs['confObj'],newtaskproj)
+        newproj = loadProj(ctxObjs['confObj'],newtaskproj)
         if isinstance(newproj, str):
             return proj
 
-        output = main.makeTask(newproj, newtaskname, None, task)
+        output = makeTask(newproj, newtaskname, None, task)
         if isinstance(output, str):
             return output
     else:
-        output = main.makeTask(proj, newtaskname, None, task)
+        output = makeTask(proj, newtaskname, None, task)
         if isinstance(output, str):
             return output
 
@@ -254,7 +264,7 @@ def promote(confObj, newProjName, parProj, taskObj):
     if isinstance(newProj, str):
         return newProj
 
-    taskDat = taskObj.dumpTask()
+    taskDat = taskObj.dumpDat()
     for key, value in taskDat.items():
         if (key in newProj.projDat\
                 and not key == 'parent'\

@@ -6,7 +6,9 @@ import os
 import datetime
 
 from myp import taskObj
+from myp import mileObj
 from myp.scripts import cliUtils
+from myp.utilities import dictUpdate as du
 
 class projObj:
     def __init__(self, projName, projFile, confObj=None, dat=None, *args, **kwargs):
@@ -17,12 +19,17 @@ class projObj:
                 ' does not exist',
                 ' already exists',
                 ]
+        self.mileValid = [\
+                'Milestones can\'t have children',
+                ' does not exist',
+                ' already exists',
+                ]
         self.projFile = projFile
         self.projDat = {
             'name':'',
             'creator':'',
             'description':'',
-            'depends':[],
+            'dependson':[],
             'contributesto':[],
             'datecreated':'',
             'team':{},
@@ -40,12 +47,12 @@ class projObj:
             }
         }
         if not dat and confObj:
-            self.newProj(confObj)
+            self.newProj(confObj, projName)
         elif dat:
-            self.loadProj(dict(dat))
+            self.loadDat(dict(dat))
             self.projDat['name']=projName
 
-    def newProj(self, confObj):
+    def newProj(self, confObj, projName):
         projDat={
             'name':'',
             'creator':'',
@@ -60,34 +67,78 @@ class projObj:
                 'contact': confObj.confDat['user']['email'],
                 'cost': confObj.confDat['user']['cost'],
                 }
-        self.projDat.update(projDat)
+        self.addMilestone('start')
+        self.addMilestone('finish')
+        self.update(projDat)
         
-    def dumpProj(self):
+    def dumpDat(self):
         datDump = self.projDat
+        for key, value in datDump['milestones'].items():
+            datDump['milestones'][key]=value.dumpDat()
+
         for key, value in datDump['tasks'].items():
-            datDump['tasks'][key]=value.dumpTask()
+            datDump['tasks'][key]=value.dumpDat()
 
         return [datDump, self.projFile]
 
-    def loadProj(self, dat):
-        self.projDat.update(dat)
-        for key, value in self.projDat['tasks'].items():
-            self.projDat['tasks'][key]=taskObj.taskObj(taskName=key, taskDat=value)
+    def loadDat(self, dat=None, *args, **kwargs):
+        if dat:
+            self.update(dat)
 
+        for key, value in self.projDat['milestones'].items():
+            if not isinstance(value, mileObj.mileObj):
+                self.projDat['milestones'][key]=mileObj.mileObj(mileName=key, mileDat=value)
+
+        for key, value in self.projDat['tasks'].items():
+            if not isinstance(value, taskObj.taskObj):
+                self.projDat['tasks'][key]=taskObj.taskObj(taskName=key, taskDat=value)
+
+    def update(self, dat):
+        self.projDat.update(du.update(self.projDat, dat))
+        self.loadDat()
+    
     def giveParent(self, parName):
         par = {'parent': parName}
-        self.projDat.update(par)
+        self.update(par)
         if 'children' in self.projDat:
             del self.projDat['children']
 
     def giveChild(self, childName):
         if not 'children' in self.projDat:
             chil = {'children':[childName]}
-            self.projDat.update(chil)
+            self.update(chil)
         else:
             self.projDat['children'].append(childName)
 
-    def addTask(self, taskName, assignee=None, dat=None, force=None, *args, **kwargs):
+    def addDepends(self, depends):
+        if not isinstance(depends, list):
+            depends = [depends]
+        for i in depends:
+            self.projDat['dependson'].append(depends)
+
+    def addContributes(self, contributes):
+        if not isinstance(contributes, list):
+            contributes = [contributes]
+        for i in contributes:
+            self.projDat['contributesto'].append(contributes)
+
+    def addMilestone(self, mileName, depends=None, contributes=None, *args, **kwargs):
+        check = self.mileCheck(mileName)
+        if isinstance(check, str) and (self.mileValid[0] in check) or\
+                (self.mileValid[2] in check):
+            return check
+        else:
+            newMile = mileObj.mileObj(mileName)
+
+        if depends:
+            newMile.addDepends(depends)
+        
+        if contributes:
+            newMile.addContributes(contributes)
+
+        self.projDat['milestones'][mileName]=newMile
+
+    def addTask(self, taskName, assignee=None, dat=None, force=None, dependson=None, contributesto=None,  *args, **kwargs):
         names = taskName.split('.')
         check = self.taskCheck(taskName)
         if isinstance(check, str) and (check.endswith(self.taskValid[0]) or\
@@ -124,10 +175,56 @@ class projObj:
                         
                 newTask.giveParent(names[0])
                 parTask.giveChildren(names[-1])
+                self.addTaskDepCon(parTask)
+
+            else:
+                print('in check')
+                self.addTaskDepCon(newTask)
 
             self.projDat['tasks'][taskName]=newTask
-        
+        print(newTask.dumpDat())
         return newTask
+
+    def addTaskDepCon(self, taskObj, dependson=None,\
+                      contributesto=None, *args, **kwargs):
+        if dependson:
+            depTask = self.loadTask(dependson)
+            if isinstance(conTask, str) and (self.taskValid[0] in depTask or\
+                                           self.taskValid[1] in depTask or\
+                                           self.taskValid[2] in depTask):
+                return depTask
+
+            taskObj.addDepends(dependson)
+            depTask.addContributes(taskObj.name)
+        else:
+            depMile = self.loadMilestone('start')
+            print(depMile)
+            if isinstance(depMile, str) and ((self.mileValid[0] in depMile) or\
+                                           self.mileValid[1] in depMile):
+                return depMile
+
+            taskObj.addDepends(depMile.name)
+            depMile.addContributes(taskObj.name)
+
+        if contributesto:
+            conTask = self.loadTask(contributesto)
+            if isinstance(conTask, str) and (self.taskValid[0] in conTask or\
+                                           self.taskValid[1] in conTask or\
+                                           self.taskValid[2] in conTask):
+                return conTask
+
+            taskObj.addContributes(contributesto)
+            conTask.addDepends(taskObj.name)
+        else:
+            conMile = self.loadMilestone('finish')
+            print(conMile)
+            if isinstance(conMile, str) and ((self.mileValid[0] in conMile) or\
+                                           self.mileValid[1] in conMile):
+                return conMile
+
+            taskObj.addContributes(conMile.name)
+            conMile.addDepends(taskObj.name)
+
 
     def loadTask(self, taskName):
         names = taskName.split('.')
@@ -140,10 +237,20 @@ class projObj:
         elif isinstance(check, str) and check.endswith(self.taskValid[3]):
             return self.projDat['tasks'][taskName]
 
+    def loadMilestone(self, mileName):
+        names = mileName.split('.')
+        check = self.mileCheck(mileName)
+        if isinstance(check, str) and (check.endswith(self.mileValid[0]) or\
+                                       check.endswith(self.mileValid[1])):
+            return check
+
+        elif isinstance(check, str) and check.endswith(self.mileValid[2]):
+            return self.projDat['milestones'][mileName]
+
     def deleteTask(self, taskName, force=None):
         names = taskName.split('.')
         check = self.taskCheck(taskName)
-        task = self.loadTask(taskName).dumpTask()
+        task = self.loadTask(taskName).dumpDat()
         if isinstance(check, str) and (check.endswith(self.taskValid[0]) or\
                                        check.endswith(self.taskValid[1]) or\
                                        check.endswith(self.taskValid[2])):
@@ -154,7 +261,7 @@ class projObj:
                 if not force:
                     cliUtils.getConfirmation('Are you sure you want to delete this subtask?')
 
-                parTask = self.loadTask(names[0]).dumpTask()
+                parTask = self.loadTask(names[0]).dumpDat()
                 parTask['children'].remove(names[-1])
                 if not parTask['children']:
                     del parTask['children']
@@ -185,5 +292,17 @@ class projObj:
             outStr = 'Task ' + taskName + self.taskValid[2]
         else:
             outStr = 'Task ' + taskName + self.taskValid[3]
+
+        return outStr
+
+    def mileCheck(self, mileName):
+        names=mileName.split('.')
+        if len(names) > 1:
+            outStr = self.mileValid[0]
+
+        if not mileName in self.projDat['milestones']:
+            outStr = 'Milestone ' + mileName + self.mileValid[1]
+        else:
+            outStr = 'Milestone ' + mileName + self.mileValid[2]
 
         return outStr

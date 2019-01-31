@@ -3,6 +3,7 @@ import shutil
 import datetime
 
 from myp.scripts import cliUtils
+from myp.utilities import dictUpdate as du
 
 class taskObj:
     def __init__(self, taskName, assignee=None, assigneeDeet=None,\
@@ -12,10 +13,11 @@ class taskObj:
             'name':'',
             'description':'',
             'contributesto':[],
-            'depends':[],
+            'dependson':[],
             'datecreated':'',
             'status':'in-progress',
             'started':'',
+            'parallelizeability':1,
             'timeSpent':0,
             'sessions':[],
             'assignee':{},
@@ -37,7 +39,7 @@ class taskObj:
         if not taskDat and assignee:
             self.newTask(assignee, dict(assigneeDeet))
         else:
-            self.taskDat.update(dict(taskDat))
+            self.update(taskDat)
             self.taskDat['name']=taskName
 
     def newTask(self, assignee, assigneeDeet):
@@ -46,23 +48,38 @@ class taskObj:
         taskDat['assignee'] = {assignee:assigneeDeet,}
         taskDat['datecreated']=datetime.datetime.\
             now(datetime.timezone.utc).isoformat()
-        self.taskDat.update(taskDat)
+        self.update(taskDat)
 
-    def dumpTask(self):
+    def dumpDat(self):
         return self.taskDat
+
+    def update(self, dat):
+        self.taskDat.update(du.update(self.taskDat, dat))
 
     def giveParent(self, parName):
         par = {'parent': parName}
-        self.taskDat.update(par)
+        self.update(par)
         if 'children' in self.taskDat:
             del self.taskDat['children']
 
     def giveChildren(self, childName):
         if not 'children' in self.taskDat:
             chil = {'children':[childName]}
-            self.taskDat.update(chil)
+            self.update(chil)
         else:
             self.taskDat['children'].append(childName)
+
+    def addDepends(self, depends):
+        if not isinstance(depends, list):
+            depends = [depends]
+        for i in depends:
+            self.taskDat['dependson'].append(depends)
+
+    def addContributes(self, contributes):
+        if not isinstance(contributes, list):
+            contributes = [contributes]
+        for i in contributes:
+            self.taskDat['contributesto'].append(contributes)
 
     def status(self, newStatus=None, *args, **kwargs):
         return self.taskDat['status']
