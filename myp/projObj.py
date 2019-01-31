@@ -178,11 +178,10 @@ class projObj:
                 self.addTaskDepCon(parTask)
 
             else:
-                print('in check')
                 self.addTaskDepCon(newTask)
 
             self.projDat['tasks'][taskName]=newTask
-        print(newTask.dumpDat())
+
         return newTask
 
     def addTaskDepCon(self, taskObj, dependson=None,\
@@ -198,7 +197,6 @@ class projObj:
             depTask.addContributes(taskObj.name)
         else:
             depMile = self.loadMilestone('start')
-            print(depMile)
             if isinstance(depMile, str) and ((self.mileValid[0] in depMile) or\
                                            self.mileValid[1] in depMile):
                 return depMile
@@ -217,7 +215,6 @@ class projObj:
             conTask.addDepends(taskObj.name)
         else:
             conMile = self.loadMilestone('finish')
-            print(conMile)
             if isinstance(conMile, str) and ((self.mileValid[0] in conMile) or\
                                            self.mileValid[1] in conMile):
                 return conMile

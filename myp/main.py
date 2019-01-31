@@ -31,8 +31,8 @@ def initConf(cfg):
 def getUserInfo():
     cliUtils.printToCli('No config file found.')
     cliUtils.getConfirmation('Would you like to create one?')
-    name = cliUtils.getInput('Name:')
-    email = cliUtils.getInput('Email:')
+    name = cliUtils.getInput('Name')
+    email = cliUtils.getInput('Email')
     return [name, email]
 
 def writeConf(confObj):
