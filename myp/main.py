@@ -185,7 +185,10 @@ def deleteProj(confObj, projName, storeType=None, storeLoc=None):
             ' delete this project, its folder,'+\
             ' and contents?'):
         
-        childList = parProj.projDat['children']
+        try:
+            childList = parProj.projDat['children']
+        except:
+            childList = []
         shutil.rmtree(storeLoc)
         if childList:
             for i in childList:

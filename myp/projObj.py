@@ -178,10 +178,11 @@ class projObj:
                 self.addTaskDepCon(parTask)
 
             else:
+                print('in check')
                 self.addTaskDepCon(newTask)
 
             self.projDat['tasks'][taskName]=newTask
-        
+        print(newTask.dumpDat())
         return newTask
 
     def addTaskDepCon(self, taskObj, dependson=None,\
@@ -197,6 +198,7 @@ class projObj:
             depTask.addContributes(taskObj.name)
         else:
             depMile = self.loadMilestone('start')
+            print(depMile)
             if isinstance(depMile, str) and ((self.mileValid[0] in depMile) or\
                                            self.mileValid[1] in depMile):
                 return depMile
@@ -215,12 +217,14 @@ class projObj:
             conTask.addDepends(taskObj.name)
         else:
             conMile = self.loadMilestone('finish')
+            print(conMile)
             if isinstance(conMile, str) and ((self.mileValid[0] in conMile) or\
                                            self.mileValid[1] in conMile):
                 return conMile
 
             taskObj.addContributes(conMile.name)
             conMile.addDepends(taskObj.name)
+
 
     def loadTask(self, taskName):
         names = taskName.split('.')
@@ -240,7 +244,7 @@ class projObj:
                                        check.endswith(self.mileValid[1])):
             return check
 
-        elif isinstance(check, str) and check.endswith(self.mileValid[3]):
+        elif isinstance(check, str) and check.endswith(self.mileValid[2]):
             return self.projDat['milestones'][mileName]
 
     def deleteTask(self, taskName, force=None):
@@ -296,7 +300,7 @@ class projObj:
         if len(names) > 1:
             outStr = self.mileValid[0]
 
-        if not mileName in self.projDat['tasks']:
+        if not mileName in self.projDat['milestones']:
             outStr = 'Milestone ' + mileName + self.mileValid[1]
         else:
             outStr = 'Milestone ' + mileName + self.mileValid[2]
