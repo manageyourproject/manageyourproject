@@ -1,7 +1,7 @@
 # Manage Your Project! A Complete Commandline Project Manager
 ---
 
-NOTE: Current this tool is not under development. I has some bugs and has not been thoroughly tested. I hope to return to it one day to complete this project.
+NOTE: Currently this tool is not under development. It has some bugs and has not been thoroughly tested. I hope to return to it one day to complete this project.
 ---
 ## A Commandline Project Manager with Bells and Whistles
 myp aims to provide a free and open source commandline project management experience that can serve to organize your projects, teams, and provide visualization of your entire project, progress, and goals.
